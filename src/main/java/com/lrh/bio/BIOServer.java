@@ -56,6 +56,7 @@ public class BIOServer {
         }finally {
             try {
                 socket.close();
+                System.out.println(Thread.currentThread().getId()+Thread.currentThread().getName()+"客户端关闭链接。。。");
             } catch (IOException e) {
                 e.printStackTrace();
             }
