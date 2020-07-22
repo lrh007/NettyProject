@@ -7,7 +7,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
 
-import java.nio.ByteBuffer;
 
 /**
  * 丢弃服务器handler
@@ -22,7 +21,10 @@ public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
         System.out.println(byteBuf.toString(CharsetUtil.UTF_8));
         byteBuf.release(); //丢弃收到的数据
     }
-
+    /**   
+     * 在客户端连接时触发，最早触发，返回数据之后就立即关闭连接
+     * @Author lrh 2020/7/22 17:58
+     */
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
         ByteBuf time = ctx.alloc().buffer(4);
