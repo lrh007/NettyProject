@@ -15,7 +15,10 @@ import java.util.Set;
  */
 public class NIOClient {
 
-    @Test
+    public static void main(String[] args) throws IOException {
+        new NIOClient().testClient();
+    }
+//    @Test
     public void testClient() throws IOException {
         Selector selector = Selector.open();
         SocketChannel socketChannel = SocketChannel.open();
@@ -53,6 +56,7 @@ public class NIOClient {
         SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
         ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
         byteBuffer.clear();
+        System.out.print("请输入消息：");
         Scanner scanner = new Scanner(System.in);
         String msg = scanner.nextLine();
         byteBuffer.put(msg.getBytes());

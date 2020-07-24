@@ -15,16 +15,20 @@ import java.util.Set;
  */
 public class NIOServer {
 
-    @Test
+
+    public static void main(String[] args) throws IOException {
+        new NIOServer().testServer();
+    }
+//    @Test
     public void testServer() throws IOException {
         Selector selector = Selector.open();
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.configureBlocking(false);
         serverSocketChannel.bind(new InetSocketAddress(8080));
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+        System.out.println("服务器启动成功。。。");
         while(true){
             if(selector.select(2000) == 0){
-                System.out.println("=======");
                 continue;
             }
             Set<SelectionKey> selectionKeys = selector.selectedKeys();
@@ -44,7 +48,7 @@ public class NIOServer {
                     handleWrite(selectionKey);
                 }
                 if(selectionKey.isConnectable()){
-                    System.out.println("连接成功。。。");
+                    System.out.println("客户端连接成功。。。");
                 }
                 iterator.remove();
             }
