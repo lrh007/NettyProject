@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * nio群聊服务器端
@@ -20,7 +18,7 @@ public class GroupChatServer {
     private ByteBuffer sendBuffer = ByteBuffer.allocate(1024); //要发送的数据
     private ByteBuffer receiveBuffer = ByteBuffer.allocate(1024); //接收到的数据
     private SocketChannel self; //每次需要排除的对象
-    private List<SocketChannel> list = new ArrayList<>();
+    private Map<String,SocketChannel> clientMap = new HashMap<>(); //保存所有的客户端
 
     public GroupChatServer() {
         try {
@@ -47,27 +45,31 @@ public class GroupChatServer {
                 Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                 while (iterator.hasNext()){
                     SelectionKey selectionKey = iterator.next();
-                    if(selectionKey.isAcceptable()){
-                        ServerSocketChannel sc = (ServerSocketChannel) selectionKey.channel();
-                        SocketChannel socketChannel = sc.accept();
-                        socketChannel.configureBlocking(false); //设置非阻塞模式
-                        socketChannel.register(selector,SelectionKey.OP_READ);
-                        System.out.println(socketChannel.getRemoteAddress()+" 上线了。。。");
-                        list.add(socketChannel);
-                    }
-                    if(selectionKey.isReadable()){
-                        handleRead(selectionKey);
-                    }
-                    if(selectionKey.isWritable()){
-//                       SocketChannel sc = (SocketChannel) selectionKey.channel();
-                       senInfoToOtherClients(new String(receiveBuffer.array()),self);
-//                       sc.register(selector,SelectionKey.OP_READ);
-                    }
                     iterator.remove();
+                    dealEvent(selectionKey);
                 }
+                selector.selectedKeys().clear();
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    /**
+     * 处理事件
+     * @Author lrh 2020/7/27 9:41
+     */
+    private void dealEvent(SelectionKey selectionKey) throws IOException {
+        if(selectionKey.isAcceptable()){
+            ServerSocketChannel sc = (ServerSocketChannel) selectionKey.channel();
+            SocketChannel socketChannel = sc.accept();
+            socketChannel.configureBlocking(false); //设置非阻塞模式
+            socketChannel.register(selector,SelectionKey.OP_READ);
+            clientMap.put(socketChannel.getRemoteAddress().toString(),socketChannel);
+            System.out.println(socketChannel.getRemoteAddress()+" 上线了。。。");
+            socketChannel.write(ByteBuffer.wrap("========欢迎来到聊天室^v^=======".getBytes()));
+        }
+        if(selectionKey.isReadable()){
+            handleRead(selectionKey);
         }
     }
 
@@ -83,14 +85,10 @@ public class GroupChatServer {
             //读取到的数据不为空，转换成字符串输出
             if(read > 0){
                 String msg = new String(byteBuffer.array());
-                System.out.println("from 客户端"+msg);
+                System.out.println("from 客户端: "+msg);
                 //向其他客户端转发消息,去掉自己
-//                senInfoToOtherClients(msg,socketChannel);
-                receiveBuffer.clear();
-                receiveBuffer.put(byteBuffer.array());
-                self = socketChannel;
+                dispatchMsg(msg,socketChannel);
             }
-            socketChannel.register(selector,SelectionKey.OP_WRITE);
         } catch (IOException e) {
             try {
                 //发送读取异常，可能是客户端关闭了
@@ -104,24 +102,37 @@ public class GroupChatServer {
             }
         }
     }
-
     /**
-     * 向其他客户端转发消息，排除自己
-     * @param msg
-     * @param self
+     * 向客户端转发消息，需要排除自己
+     * @Author lrh 2020/7/27 9:45
      */
-    private void senInfoToOtherClients(String msg,SocketChannel self) throws IOException {
-        System.out.println("服务器转发消息中。。。");
+    private void dispatchMsg(String msg,SocketChannel self){
         ByteBuffer byteBuffer = ByteBuffer.wrap(msg.getBytes());
-        //遍历所有注册到selector上的SocketChannel,并排除自己
-        for (SocketChannel sc : list) {
-            //排除自己
-//            if(sc != self){
-                //将消息转换成ByteBuffer
-                //将消息写入到channel中
-                sc.write(byteBuffer);
-                sc.register(selector,SelectionKey.OP_READ);
-//            }
+        SocketChannel othersChannel = null;
+        try{
+            /*for(SelectionKey key : selector.keys()){
+                SelectableChannel channel = key.channel();
+                if(channel instanceof SocketChannel && channel!=socketChannel){
+                    othersChannel = (SocketChannel) key.channel();
+                    othersChannel.write(byteBuffer);
+                }
+            }*/
+            Iterator<Map.Entry<String, SocketChannel>> iterator = clientMap.entrySet().iterator();
+            while (iterator.hasNext()){
+                Map.Entry<String, SocketChannel> map = iterator.next();
+                othersChannel = map.getValue();
+                if(othersChannel != self){
+                    if(othersChannel.isOpen()){
+                        while (byteBuffer.hasRemaining()){
+                            othersChannel.write(byteBuffer);
+                        }
+                    }else{
+                        iterator.remove();
+                    }
+                }
+            }
+        }catch (IOException e){
+            e.printStackTrace();
         }
     }
 

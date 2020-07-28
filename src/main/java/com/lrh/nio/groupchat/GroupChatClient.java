@@ -1,16 +1,15 @@
 package com.lrh.nio.groupchat;
 
 
+
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 群聊系统客户端
@@ -22,6 +21,7 @@ public class GroupChatClient {
     private Selector selector;
     private String userName; //客户端名称
 
+
     public GroupChatClient() {
         try {
             selector = Selector.open();
@@ -29,8 +29,8 @@ public class GroupChatClient {
             socketChannel.configureBlocking(false); //设置非阻塞模式
             socketChannel.register(selector, SelectionKey.OP_CONNECT); //将socketChannel注册到selector
             socketChannel.connect(new InetSocketAddress(HOST,PORT)); //连接服务器
-            userName = String.valueOf(new Random().nextInt(10)); //获取客户端名称
-            System.out.println(userName+" is ok。。。");
+            generateUserName();//获取客户端名称
+            System.out.println(userName+" 启动成功。。。");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -51,28 +51,30 @@ public class GroupChatClient {
                     if(selectionKey.isConnectable()){
                         SocketChannel sc = (SocketChannel) selectionKey.channel();
                         if(sc.isConnectionPending()){
-                            sc.finishConnect();
-                            sc.register(selector,SelectionKey.OP_WRITE);
+                            try{
+                                sc.finishConnect();
+                                System.out.println("连接服务器成功。。。");
+                                //单独开启一个线程用来输入数据
+                                sendMsg(sc,selectionKey);
+                            }catch (ConnectException e){
+                                System.out.println("服务器故障，请重新连接。。。");
+                            }
                         }
+                        sc.register(selector,SelectionKey.OP_READ);
                     }
                     if(selectionKey.isReadable()){
                         SocketChannel sc = (SocketChannel) selectionKey.channel();
-                        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-                        sc.read(byteBuffer);
-                        byteBuffer.flip();
-                        System.out.println(new String(byteBuffer.array()));
-                        sc.register(selector,SelectionKey.OP_WRITE);
-                    }
-                    if(selectionKey.isWritable()){
-                        SocketChannel sc = (SocketChannel) selectionKey.channel();
-                        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-                        Scanner scanner = new Scanner(System.in);
-                        String msg = scanner.nextLine();
-                        msg = userName +" 说："+msg;
-                        byteBuffer.put(msg.getBytes());
-                        byteBuffer.flip();
-                        sc.write(byteBuffer);
-                        sc.register(selector,SelectionKey.OP_READ);
+                        try{
+                            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+                            sc.read(byteBuffer);
+                            byteBuffer.flip();
+                            System.out.println(new String(byteBuffer.array()));
+                            sc.register(selector,SelectionKey.OP_READ);
+                        }catch (IOException e){
+                            selectionKey.cancel();
+                            sc.close();
+                            System.out.println("服务器故障，请重新连接。。。");
+                        }
                     }
                 }
             }
@@ -80,11 +82,52 @@ public class GroupChatClient {
             e.printStackTrace();
         }
     }
-
-
+    /**   
+     * 向服务器发送消息
+     * @Author lrh 2020/7/27 10:13
+     */
+    public void sendMsg(final SocketChannel socketChannel,final SelectionKey selectionKey) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+                try{
+                    while(true){
+                        byteBuffer.clear();
+                        Scanner scanner = new Scanner(System.in);
+                        String msg = scanner.nextLine();
+                        msg = userName +" 说："+msg;
+                        byteBuffer.put(msg.getBytes());
+                        byteBuffer.flip();
+                        socketChannel.write(byteBuffer);
+                    }
+                }catch (IOException e){
+                    try {
+                        selectionKey.cancel();
+                        socketChannel.close();
+                        System.out.println("服务器故障，请重新连接。。。");
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+    /**   
+     * 生成客户端名称
+     * @Author lrh 2020/7/27 16:27
+     */
+    private void generateUserName(){
+        StringBuilder randomName = new StringBuilder();
+        randomName.append("【");
+        for (int i = 0; i < 5; i++) {
+            randomName.append(new Random().nextInt(10)+1);
+        }
+        randomName.append("】");
+        userName = randomName.toString();
+    }
 
     public static void main(String[] args) {
-        GroupChatClient chatClient = new GroupChatClient();
-        chatClient.listen();
+        new GroupChatClient().listen();
     }
 }
