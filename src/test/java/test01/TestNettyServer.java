@@ -9,9 +9,15 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.Delimiters;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,12 +53,17 @@ public class TestNettyServer {
     }
 
 
-        static class TestNettyServerHandler extends ChannelInboundHandlerAdapter{
-        private static ChannelGroup group = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    static class TestNettyServerHandler extends ChannelInboundHandlerAdapter{
+        private static Set<Channel> channels = new HashSet<>();
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             ByteBuf buf = (ByteBuf) msg;
             System.out.println("服务器收到的消息："+buf.toString(CharsetUtil.UTF_8));
+            Channel self = ctx.channel();
+            self.writeAndFlush(Unpooled.copiedBuffer("测试群聊",CharsetUtil.UTF_8));
+            for(Channel ch : channels){
+                ch.writeAndFlush("哈哈哈哈哈");
+            }
         }
 
         @Override
@@ -87,16 +98,51 @@ public class TestNettyServer {
 
         @Override
         public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-            group.add(ctx.channel());
             System.out.println("handlerAdd");
+            channels.add(ctx.channel());
         }
 
         @Override
         public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-            group.remove(ctx.channel());
             System.out.println("handlerRemove");
+            channels.remove(ctx.channel());
         }
 
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            ctx.close();
+            cause.printStackTrace();
+        }
+    }
+
+    static class TestNettyServerHandler2 extends SimpleChannelInboundHandler<String>{
+        private static Set<Channel> channels = new HashSet<>();
+
+        @Override
+        protected void channelRead0(ChannelHandlerContext ctx, String s) throws Exception {
+            Channel channel = ctx.channel();
+            ctx.writeAndFlush("[you] 说："+s);
+            System.out.println(channel.remoteAddress()+" 说："+s);
+            for(Channel ch : channels){
+                if(ch != channel){
+                    ctx.writeAndFlush("["+channel.remoteAddress()+"] 说："+s);
+                }else{
+                    ctx.writeAndFlush("[you] 说："+s);
+                }
+            }
+
+        }
+
+        @Override
+        public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+            channels.add(ctx.channel());
+        }
+
+        @Override
+        public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+            channels.remove(ctx.channel());
+        }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

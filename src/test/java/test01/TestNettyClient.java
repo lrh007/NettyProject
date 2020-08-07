@@ -7,6 +7,10 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.Delimiters;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.CharsetUtil;
 
 import java.util.Scanner;
@@ -56,6 +60,20 @@ public class TestNettyClient {
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             ByteBuf buf = (ByteBuf) msg;
             System.out.println("服务器返回："+buf.toString(CharsetUtil.UTF_8));
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            ctx.close();
+            cause.printStackTrace();
+        }
+    }
+    static class TestNettyClientHandler2 extends SimpleChannelInboundHandler<String>{
+
+
+        @Override
+        protected void channelRead0(ChannelHandlerContext channelHandlerContext, String s) throws Exception {
+            System.out.println("服务器返回："+s);
         }
 
         @Override

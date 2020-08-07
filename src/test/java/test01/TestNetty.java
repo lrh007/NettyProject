@@ -62,4 +62,11 @@ public class TestNetty {
         System.out.println(NettyRuntime.availableProcessors());
     }
 
+    @Test
+    public void test04(){
+        ByteBuf buf = Unpooled.copiedBuffer("hello world!",CharsetUtil.UTF_8);
+        String s = ByteBufUtil.hexDump(buf);
+        System.out.println(s);
+    }
+
 }
