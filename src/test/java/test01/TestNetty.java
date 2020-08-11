@@ -69,4 +69,11 @@ public class TestNetty {
         System.out.println(s);
     }
 
+    @Test
+    public void testDouble(){
+        String s = "1000.00";
+        System.out.println(Double.parseDouble(s));
+
+    }
+
 }
