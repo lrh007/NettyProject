@@ -13,7 +13,6 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import java.security.cert.CertificateException;
 
@@ -23,11 +22,10 @@ import java.security.cert.CertificateException;
  * @Author lrh 2020/8/17 16:51
  */
 public class TelnetServer {
-    private int port;
-    private final boolean SSL = System.getProperty("ssl") != null;
+    static final boolean SSL = System.getProperty("ssl") != null;
+    static final int PORT = Integer.parseInt(System.getProperty("port", SSL? "8992" : "8023"));
     private SslContext sslContext = null;
     public TelnetServer(int port,boolean enableSSL){
-        this.port = port;
         if(enableSSL){
             try {
                 SelfSignedCertificate ssc = new SelfSignedCertificate();
@@ -49,8 +47,8 @@ public class TelnetServer {
                 .option(ChannelOption.SO_BACKLOG,128)
                 .childOption(ChannelOption.SO_KEEPALIVE,true);
         try {
-            ChannelFuture future = bootstrap.bind(port).sync();
-            System.out.println("服务器启动成功，监听端口： "+port);
+            ChannelFuture future = bootstrap.bind(PORT).sync();
+            System.out.println("服务器启动成功，监听端口： "+PORT);
             future.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
