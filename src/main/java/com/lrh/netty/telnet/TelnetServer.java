@@ -1,10 +1,8 @@
 package com.lrh.netty.telnet;
 
-import com.lrh.netty.udp.LogEvent;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.nio.NioEventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -42,7 +40,7 @@ public class TelnetServer {
         ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(bossGroup,workGroup)
                 .channel(NioServerSocketChannel.class)
-                .handler(new LoggingHandler(LogLevel.ERROR))
+                .handler(new LoggingHandler(LogLevel.INFO))
                 .childHandler(new TelnetServerInitializer(sslContext))
                 .option(ChannelOption.SO_BACKLOG,128)
                 .childOption(ChannelOption.SO_KEEPALIVE,true);
@@ -58,7 +56,7 @@ public class TelnetServer {
         }
     }
     public static void main(String[] args) {
-        new TelnetServer(80,false).run();
+        new TelnetServer(8023,false).run();
     }
 
 }
