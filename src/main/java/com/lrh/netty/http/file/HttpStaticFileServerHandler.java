@@ -38,6 +38,9 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
     private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
     private FullHttpRequest fullHttpRequest;
+    //默认根目录文件夹
+    private static final String DEFAULT_ROOT_PATH = System.getProperty("user.dir");
+//    private static final String DEFAULT_ROOT_PATH = "E:\\JavaProject";
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
@@ -52,7 +55,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         }
         final boolean keepAlive = HttpUtil.isKeepAlive(request);
         final String uri = request.uri();
-        final String path = sanitizeUri(uri);
+        final String path = this.sanitizeUri(uri);
         if (path == null) {
             this.sendError(ctx, HttpResponseStatus.FORBIDDEN);
             return;
@@ -97,8 +100,8 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         long fileLength = file.length();
         HttpResponse response = new DefaultHttpResponse(HTTP_1_1,OK);
         HttpUtil.setContentLength(response,fileLength); //设置文件大小
-        setContentTypeHeader(response, file);
-        setDateAndCacheHeaders(response, file);
+        this.setContentTypeHeader(response, file);
+        this.setDateAndCacheHeaders(response, file);
         if(!keepAlive){
             response.headers().set(HttpHeaderNames.CONNECTION,HttpHeaderValues.CLOSE);
         }else if(request.protocolVersion().equals(HTTP_1_0)){
@@ -263,7 +266,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             return null;
         }
         //转换为绝对路径。
-        return System.getProperty("user.dir") + File.separator + uri;
+        return DEFAULT_ROOT_PATH + File.separator + uri;
     }
 
     /**
