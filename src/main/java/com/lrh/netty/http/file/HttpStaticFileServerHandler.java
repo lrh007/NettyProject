@@ -303,4 +303,12 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             future.addListener(ChannelFutureListener.CLOSE);
         }
     }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        if(ctx.channel().isActive()){
+            this.sendError(ctx,INTERNAL_SERVER_ERROR);
+        }
+    }
 }
