@@ -21,8 +21,8 @@ import java.security.cert.CertificateException;
 public class HttpProxyServer {
     private static final boolean SSL = false;
     public static final int LOCAL_PORT = 8443;
-    public static final String REMOTE_HOST = "www.baidu.com";
-    public static final int REMOTE_PORT = 80;
+    public static final String REMOTE_HOST = "127.0.0.1";
+    public static final int REMOTE_PORT = 8080;
 
 
     public static void main(String[] args) throws CertificateException, SSLException {

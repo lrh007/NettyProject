@@ -17,7 +17,7 @@ public class HexDumpProxy {
     //代理服务器的端口号
     public static final int LOCAL_PORT = Integer.parseInt(System.getProperty("localPort","8443"));
     //被代理的远程服务器地址
-    public static final String REMOTE_HOST = System.getProperty("remoteHost","www.baidu.com");
+    public static final String REMOTE_HOST = System.getProperty("remoteHost","www.baidu.com1");
     //被代理的远程服务器端口号
     public static final int REMOTE_PORT = Integer.parseInt(System.getProperty("remotePort","8443"));
 
