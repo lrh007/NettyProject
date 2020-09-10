@@ -4,6 +4,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 
 /**服务器端外部访问的初始化器
  * @Author lrh 2020/9/9 15:52
@@ -12,6 +14,7 @@ public class HttpProxyServerOutSideInitializer extends ChannelInitializer<Socket
     @Override
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         ChannelPipeline pipeline = socketChannel.pipeline();
+        pipeline.addLast(new LoggingHandler(LogLevel.ERROR));
         pipeline.addLast(new HttpObjectAggregator(6553600));
         pipeline.addLast(new HttpProxyServerOutSideHandler());
     }

@@ -1,9 +1,8 @@
 package com.lrh.netty.http.proxy3;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.*;
 import io.netty.util.CharsetUtil;
 
 /** 处理服务器端外部请求的业务逻辑
@@ -24,16 +23,27 @@ public class HttpProxyServerOutSideHandler extends ChannelInboundHandlerAdapter 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-
-
         ByteBuf buf = (ByteBuf) msg;
         System.out.println("代理服务器外部处理器收到的消息："+buf.toString(CharsetUtil.UTF_8));
 
         //获取内部通信的channel
         final Channel channel_inside = HttpProxyServerInSideHandler.channel_inside;
         //向内部通信的客户端转发消息
-        if(channel_inside != null && channel_inside.isActive()){
-            channel_inside.writeAndFlush(msg);
+        if(channel_inside != null){
+            ChannelFuture future = channel_inside.writeAndFlush(msg);
+            future.addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                    if(channelFuture.isSuccess()){
+                        ctx.channel().read();
+                    }else{
+                        channelFuture.channel().close();
+                    }
+                }
+            });
+        }else{
+            System.out.println("代理服务器内部通信的channel为空！");
+            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }
     }
 
@@ -41,5 +51,9 @@ public class HttpProxyServerOutSideHandler extends ChannelInboundHandlerAdapter 
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
         ctx.close();
+    }
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
 }

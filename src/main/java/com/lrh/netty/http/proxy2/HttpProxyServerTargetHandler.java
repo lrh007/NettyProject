@@ -1,6 +1,8 @@
 package com.lrh.netty.http.proxy2;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
+import io.netty.util.CharsetUtil;
 
 /**
  * @Author lrh 2020/9/2 11:20

@@ -1,9 +1,9 @@
 package com.lrh.netty.http.proxy3;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.*;
+import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 
 /** 处理服务器端内部请求的业务逻辑
@@ -31,8 +31,21 @@ public class HttpProxyServerInSideHandler extends ChannelInboundHandlerAdapter {
         //获取外部通信的channel
         final Channel channel_outside = HttpProxyServerOutSideHandler.channel_outside;
         //向外部客户端转发消息
-        if(channel_outside != null && channel_outside.isActive()){
-            channel_outside.writeAndFlush(msg);
+        if(channel_outside != null){
+            ChannelFuture future = channel_outside.writeAndFlush(msg);
+            future.addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                    if(channelFuture.isSuccess()){
+                        ctx.channel().read();
+                    }else{
+                        channelFuture.channel().close();
+                    }
+                }
+            });
+        }else{
+            System.out.println("代理服务器外部通信的channel为空！");
+            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }
     }
 
@@ -40,5 +53,9 @@ public class HttpProxyServerInSideHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
         ctx.close();
+    }
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
 }
