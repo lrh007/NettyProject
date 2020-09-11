@@ -25,8 +25,9 @@ public class HttpProxyClientTargetHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ByteBuf buf = (ByteBuf) msg;
-        System.out.println("向代理服务器转发消息： "+buf.toString(CharsetUtil.UTF_8));
+//        ByteBuf buf = (ByteBuf) msg;
+//        System.out.println("向代理服务器转发消息： "+buf.toString(CharsetUtil.UTF_8));
+        System.out.println("向代理服务器转发消息");
         //向代理服务器转发消息
         if(proxyServerInsideChannel != null){
             ChannelFuture future = proxyServerInsideChannel.writeAndFlush(msg);
@@ -37,20 +38,24 @@ public class HttpProxyClientTargetHandler extends ChannelInboundHandlerAdapter {
                         ctx.channel().read();
                     }else{
                         System.out.println("向代理服务器转发消息失败！");
-                        channelFuture.channel().close();
+                        proxyServerInsideChannel.close();
                     }
                 }
             });
         }
     }
 
+
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
-        ctx.close();
+        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        if(proxyServerInsideChannel != null && proxyServerInsideChannel.isActive()){
+            proxyServerInsideChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
+//        proxyServerInsideChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
 }

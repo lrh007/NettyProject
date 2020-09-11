@@ -3,6 +3,7 @@ package com.lrh.netty.http.proxy3;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -23,9 +24,7 @@ public class HttpProxyServer {
      * 外部访问端口
      * @Author lrh 2020/9/9 15:24
      */
-    private static final int OUTSIDE_PORT = 8843;
-    public static Channel channelInside;
-    public static Channel channelOutside;
+    private static final int OUTSIDE_PORT = 8443;
 
     public static void main(String[] args) {
         //监听和代理客户端通信端口
@@ -40,17 +39,18 @@ public class HttpProxyServer {
         bootstrap_inside.group(bossGroup_inside,workGroup_inside)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new HttpProxyServerInSideInitializer());
+                .childHandler(new HttpProxyServerInSideInitializer())
+                .childOption(ChannelOption.SO_KEEPALIVE,true)
+                .childOption(ChannelOption.AUTO_READ,false);
         bootstrap_outside.group(bossGroup_outside,workGroup_outside)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new HttpProxyServerOutSideInitializer());
+                .childHandler(new HttpProxyServerOutSideInitializer())
+                .childOption(ChannelOption.SO_KEEPALIVE,true)
+                .childOption(ChannelOption.AUTO_READ,false);
         try {
             ChannelFuture clientFuture = bootstrap_inside.bind(INSIDE_PORT).sync();
             ChannelFuture browerFuture = bootstrap_outside.bind(OUTSIDE_PORT).sync();
-            channelInside = clientFuture.channel();
-            channelOutside = browerFuture.channel();
-
             System.out.println("代理服务器启动成功，和代理客户端内部通信端口为："+INSIDE_PORT);
             System.out.println("代理服务器启动成功，外部访问端口为："+OUTSIDE_PORT);
             clientFuture.channel().closeFuture().sync();

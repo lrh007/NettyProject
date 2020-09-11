@@ -15,7 +15,7 @@ public class HttpProxyClientInitializer extends ChannelInitializer<SocketChannel
     @Override
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         ChannelPipeline pipeline = socketChannel.pipeline();
-        pipeline.addLast(new LoggingHandler(LogLevel.ERROR));
+//        pipeline.addLast(new LoggingHandler(LogLevel.INFO));
         pipeline.addLast(new HttpObjectAggregator(6553600));
         pipeline.addLast(new HttpProxyClientHandler());
     }

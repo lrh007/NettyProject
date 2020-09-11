@@ -38,7 +38,7 @@ public class HttpProxyServer {
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup,workGroup)
                 .channel(NioServerSocketChannel.class)
-                .handler(new LoggingHandler(LogLevel.INFO))
+                .handler(new LoggingHandler(LogLevel.ERROR))
                 .childHandler(new HttpProxyServerInitializer(sslCtx,REMOTE_HOST,REMOTE_PORT));
         System.out.println("代理："+LOCAL_PORT+" TO "+REMOTE_HOST+":"+REMOTE_PORT);
         try {

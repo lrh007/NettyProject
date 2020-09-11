@@ -20,18 +20,25 @@ public class HttpProxyServerInSideHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("内部客户端上线："+ctx.channel().remoteAddress());
         channel_inside = ctx.channel();
+        ctx.read();
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
-        ByteBuf buf = (ByteBuf) msg;
-        System.out.println("代理服务器内部处理器收到的消息："+buf.toString(CharsetUtil.UTF_8));
-
+//        ByteBuf buf = (ByteBuf) msg;
+//        System.out.println("代理服务器内部处理器收到的消息："+buf.toString(CharsetUtil.UTF_8));
+        System.out.println("代理服务器内部处理器收到的消息");
         //获取外部通信的channel
         final Channel channel_outside = HttpProxyServerOutSideHandler.channel_outside;
         //向外部客户端转发消息
         if(channel_outside != null){
+//            ByteBuf b = Unpooled.copiedBuffer("hhhhh",CharsetUtil.UTF_8);
+//            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,b);
+//            response.headers().set(HttpHeaderNames.CONTENT_LENGTH,b.readableBytes());
+//            response.headers().set(HttpHeaderNames.CONTENT_TYPE,"text/plain;charset=UTF-8");
+//            ChannelFuture future = channel_outside.writeAndFlush(msg);
+
             ChannelFuture future = channel_outside.writeAndFlush(msg);
             future.addListener(new ChannelFutureListener() {
                 @Override
@@ -39,7 +46,7 @@ public class HttpProxyServerInSideHandler extends ChannelInboundHandlerAdapter {
                     if(channelFuture.isSuccess()){
                         ctx.channel().read();
                     }else{
-                        channelFuture.channel().close();
+                        channel_outside.close();
                     }
                 }
             });
@@ -52,10 +59,12 @@ public class HttpProxyServerInSideHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
-        ctx.close();
+        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        if(HttpProxyServerOutSideHandler.channel_outside != null && HttpProxyServerOutSideHandler.channel_outside.isActive()){
+            HttpProxyServerOutSideHandler.channel_outside.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
     }
 }

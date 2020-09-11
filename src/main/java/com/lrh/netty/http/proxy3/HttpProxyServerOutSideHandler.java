@@ -19,17 +19,18 @@ public class HttpProxyServerOutSideHandler extends ChannelInboundHandlerAdapter 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("外部客户端上线："+ctx.channel().remoteAddress());
         channel_outside = ctx.channel();
+        ctx.read();
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ByteBuf buf = (ByteBuf) msg;
-        System.out.println("代理服务器外部处理器收到的消息："+buf.toString(CharsetUtil.UTF_8));
-
+//        ByteBuf buf = (ByteBuf) msg;
+//        System.out.println("代理服务器外部处理器收到的消息："+buf.toString(CharsetUtil.UTF_8));
+        System.out.println("代理服务器外部处理器收到的消息");
         //获取内部通信的channel
         final Channel channel_inside = HttpProxyServerInSideHandler.channel_inside;
         //向内部通信的客户端转发消息
-        if(channel_inside != null){
+        if(channel_inside != null && channel_inside.isActive()){
             ChannelFuture future = channel_inside.writeAndFlush(msg);
             future.addListener(new ChannelFutureListener() {
                 @Override
@@ -37,7 +38,7 @@ public class HttpProxyServerOutSideHandler extends ChannelInboundHandlerAdapter 
                     if(channelFuture.isSuccess()){
                         ctx.channel().read();
                     }else{
-                        channelFuture.channel().close();
+                        ctx.channel().close();
                     }
                 }
             });
@@ -47,13 +48,16 @@ public class HttpProxyServerOutSideHandler extends ChannelInboundHandlerAdapter 
         }
     }
 
+
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
-        ctx.close();
+        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        if(HttpProxyServerInSideHandler.channel_inside != null && HttpProxyServerInSideHandler.channel_inside.isActive()){
+            HttpProxyServerInSideHandler.channel_inside.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
     }
 }

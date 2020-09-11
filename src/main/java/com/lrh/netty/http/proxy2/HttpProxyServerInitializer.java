@@ -29,7 +29,7 @@ public class HttpProxyServerInitializer extends ChannelInitializer<SocketChannel
             pipeline.addLast(sslContext.newHandler(socketChannel.alloc(),remoteHost,remotePort));
         }
         pipeline.addLast(new HttpServerCodec());
-        pipeline.addLast(new LoggingHandler(LogLevel.INFO))
+        pipeline.addLast(new LoggingHandler(LogLevel.ERROR))
                 .addLast(new HttpProxyServerHandler(remoteHost,remotePort));
     }
 }
