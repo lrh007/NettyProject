@@ -30,7 +30,7 @@ public class HttpProxyServerOutSideHandler extends ChannelInboundHandlerAdapter 
         //获取内部通信的channel
         final Channel channel_inside = HttpProxyServerInSideHandler.channel_inside;
         //向内部通信的客户端转发消息
-        if(channel_inside != null && channel_inside.isActive()){
+        if(channel_inside != null ){
             ChannelFuture future = channel_inside.writeAndFlush(msg);
             future.addListener(new ChannelFutureListener() {
                 @Override
