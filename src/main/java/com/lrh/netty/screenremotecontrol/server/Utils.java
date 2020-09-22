@@ -1,4 +1,4 @@
-package com.lrh.netty.screenremotecontrol;
+package com.lrh.netty.screenremotecontrol.server;
 
 import java.util.Random;
 

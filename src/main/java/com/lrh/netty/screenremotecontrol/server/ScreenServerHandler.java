@@ -1,7 +1,6 @@
 package com.lrh.netty.screenremotecontrol.server;
 
 import com.lrh.netty.screenremotecontrol.ScreenData;
-import com.lrh.netty.screenremotecontrol.Utils;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
