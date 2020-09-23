@@ -53,7 +53,9 @@ public class ComponentListener {
         jFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName,clientName,Const.STATUS_CLOSE));
+                if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
+                    ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName,clientName,Const.STATUS_CLOSE));
+                }
                 System.exit(0);
             }
         });
@@ -66,7 +68,9 @@ public class ComponentListener {
         jFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName,clientName,Const.STATUS_CLOSE));
+                if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
+                    ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName,clientName,Const.STATUS_CLOSE));
+                }
                 System.exit(0);
             }
         });
