@@ -54,10 +54,13 @@ public class ScreenServerHandler extends SimpleChannelInboundHandler<ScreenData>
             }else{
                 //接收方不是ALL,并且找不到的情况下，直接返回提示信息
                 screenData.setContent("【"+screenData.getReceiveName()+" 客户端不在线】");
+                screenData.setStatus(404);
                 ctx.channel().writeAndFlush(screenData);
             }
         }
     }
+
+
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {

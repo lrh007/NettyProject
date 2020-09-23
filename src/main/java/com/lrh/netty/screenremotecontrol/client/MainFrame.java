@@ -7,11 +7,12 @@ import java.awt.*;
  * @Author lrh 2020/9/22 14:01
  */
 public class MainFrame {
+    public static JFrame jFrame = new JFrame("screen");
     private JPanel jPanel = new JPanel();
     private JLabel jLabel = new JLabel("本机识别码");
     private JLabel jLabel2 = new JLabel("伙伴识别码");
     private JLabel myClientName = new JLabel("--- --- ---");
-    private JTextField friendName = new JTextField();
+    public static JTextField friendName = new JTextField();
     private JButton connectBtn = new JButton("远程协助");
     public static JLabel tips = new JLabel(" 正在连接服务器...");
 
@@ -32,7 +33,7 @@ public class MainFrame {
      * @Author lrh 2020/9/22 16:35
      */
     private void init(){
-        JFrame jFrame = new JFrame("screen");
+
         jFrame.setSize(Const.FRAME_WIDTH,Const.FRAME_HEIGHT); //窗体大小
         jFrame.setResizable(false); //禁止调节窗体大小
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -65,20 +66,21 @@ public class MainFrame {
         jPanel.add(tips);
         jFrame.add(jPanel);
         jFrame.setVisible(true);
-        jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); //关闭窗口时退出进程
     }
     /**   
      * 事件监听
      * @Author lrh 2020/9/22 16:22
      */
     private void addListener(){
-        ComponentListener.connectServerListener(connectBtn,friendName);
+        ComponentListener.connectServerListener(connectBtn,friendName,myClientName);
+        ComponentListener.closeMainFrameListener(jFrame,friendName.getText().trim());
     }
     /**   
      * 设置普通提示信息
      * @Author lrh 2020/9/22 16:18
      */
     public static void setMsg(String msg){
+        tips.setText("");
         tips.setText(msg);
     }
     /**   
@@ -87,6 +89,7 @@ public class MainFrame {
      */
     public static void setErrorMsg(String msg){
         tips.setForeground(Color.red);
+        tips.setText("");
         tips.setText(msg);
     }
     /**
@@ -95,6 +98,7 @@ public class MainFrame {
      */
     public static void setSuccessMsg(String msg){
         tips.setForeground(Color.decode("#2db60d"));
+        tips.setText("");
         tips.setText(msg);
     }
     /**   
@@ -105,8 +109,9 @@ public class MainFrame {
         try {
             glintChar();
             while(true){
-                if(Const.myClientName != null && ScreenClient.serverChannel != null){
-                    Const.CONNNECT_SUCCESS = true;
+                if(Const.myClientName != null && ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
+                    Const.CONNECT_SUCCESS = true;
+                    Const.CONNECT_RETRY = false;
                     myClientName.setText(Const.myClientName);
                     setSuccessMsg(" 服务器连接成功");
                     break;
@@ -120,7 +125,7 @@ public class MainFrame {
             e.printStackTrace();
         }
     }
-    public void connect(){
+    private static void connect(){
         //连接服务器的放到单独的线程中去执行
         new Thread(new Runnable() {
             @Override
@@ -133,12 +138,11 @@ public class MainFrame {
      * 连接服务器的时候提示信息闪烁
      * @Author lrh 2020/9/23 9:20
      */
-    public void glintChar(){
+    private static void glintChar(){
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while(!Const.CONNNECT_SUCCESS){
-
+                while(!Const.CONNECT_SUCCESS){
                     setMsg(" 正在连接服务器...");
                     try {
                         Thread.sleep(500);
