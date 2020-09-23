@@ -2,7 +2,6 @@ package com.lrh.netty.screenremotecontrol.client;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.TimeUnit;
 
 /** 主窗体
  * @Author lrh 2020/9/22 14:01
@@ -14,7 +13,7 @@ public class MainFrame {
     private JLabel myClientName = new JLabel("--- --- ---");
     private JTextField friendName = new JTextField();
     private JButton connectBtn = new JButton("远程协助");
-    public static JLabel tips = new JLabel("正在连接服务器...");
+    public static JLabel tips = new JLabel(" 正在连接服务器...");
 
     public MainFrame() {
         try { // 使用当前系统的界面风格
@@ -104,10 +103,12 @@ public class MainFrame {
      */
     public void connectServer(){
         try {
+            glintChar();
             while(true){
                 if(Const.myClientName != null && ScreenClient.serverChannel != null){
                     Const.CONNNECT_SUCCESS = true;
-                    setSuccessMsg("服务器连接成功");
+                    myClientName.setText(Const.myClientName);
+                    setSuccessMsg(" 服务器连接成功");
                     break;
                 }
                 //连接服务器
@@ -128,6 +129,30 @@ public class MainFrame {
             }
         }).start();
     }
+    /**
+     * 连接服务器的时候提示信息闪烁
+     * @Author lrh 2020/9/23 9:20
+     */
+    public void glintChar(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(!Const.CONNNECT_SUCCESS){
+
+                    setMsg(" 正在连接服务器...");
+                    try {
+                        Thread.sleep(500);
+                        setMsg("");
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+
     public static void main(String[] args) {
         new MainFrame();
     }
