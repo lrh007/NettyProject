@@ -71,14 +71,20 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
             Const.CONNECT_CLOSE = true;
         }else if(screenData.getStatus() == Const.STATUS_AGREE){
             System.out.println("对方同意连接，将主窗体最小化，并且显示图像窗口");
+            Const.mouseSendClientName = screenData.getReceiveName();
+            Const.mouseReceiveClientName = screenData.getSendName();
             //对方同意连接，将主窗体最小话，并且显示图像窗口
             if(!show){
                 MainFrame.jFrame.setExtendedState(ICONIFIED); //窗口最小化
                 show = true;
             }
             //展示图像
-            System.out.println("图片大小= "+screenData.getImageData().length()+",大小="+screenData.getImageData().getBytes().length/1024);
-            ViewFrame.INSTANCE().showView(screenData.getImageData());
+            //因为鼠标事件也需要发送消息，所以这里要判断一下
+            if(screenData.getImageData() != null){
+                System.out.println("图片大小= "+screenData.getImageData().length()+",大小="+screenData.getImageData().getBytes().length/1024);
+                ViewFrame.INSTANCE().showView(screenData.getImageData());
+            }
+            handlerMouseEvent(screenData.getMouse());
         }
     }
     /**
@@ -94,23 +100,23 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
             e.printStackTrace();
         }
         Robot finalRobot = robot;
+        Rectangle rectangle = new Rectangle(screenSize);
+        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while(!Const.CONNECT_CLOSE){
                     try {
                         System.out.println("发送数据。。。");
-                        Rectangle rectangle = new Rectangle(screenSize);
                         BufferedImage screenCapture = finalRobot.createScreenCapture(rectangle);
-                        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
                         ImageIO.write(screenCapture,"jpg",byteArrayStream);
-                        ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE);
                         String imageData = Base64.getEncoder().encodeToString(byteArrayStream.toByteArray()); ////对图片进行编码
 //                        imageData = Util.compress(imageData); //压缩字符串
                         System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-                        sc.setImageData(imageData);
+                        ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,imageData);
                         ctx.writeAndFlush(sc);
-                        Thread.sleep(1000);
+                        byteArrayStream.reset();
+                        Thread.sleep(Const.SEND_DATA_INTERVAL);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -121,9 +127,62 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
         }).start();
     }
 
+    /**
+     * 处理鼠标事件
+     * @Author lrh 2020/9/24 15:42
+     */
+    private void handlerMouseEvent(Mouse mouse){
+        if(mouse != null){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Robot robot = new Robot();
+                        if(Const.mouseClicked.equals(mouse.getMouseAction())){
+                            //鼠标点击事件,包含按下、松开两个动作
+                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                            robot.mousePress(mouse.getMouseType());
+                            robot.mouseRelease(mouse.getMouseType());
+                            System.out.println("处理鼠标点击事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                        }else if(Const.mousePressed.equals(mouse.getMouseAction())){
+                            //鼠标按下事件
+                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                            robot.mousePress(mouse.getMouseType());
+                            System.out.println("处理鼠标按下事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                        }else if(Const.mouseReleased.equals(mouse.getMouseAction())){
+                            //鼠标释放事件
+                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                            robot.mouseRelease(mouse.getMouseType());
+                            System.out.println("处理鼠标释放事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                        }else if(Const.mouseWheelMoved.equals(mouse.getMouseAction())){
+                            //鼠标滚轮滑动事件
+                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                            robot.mouseWheel(mouse.getMouseWhileAmt());
+                            System.out.println("处理鼠标滚轮滑动事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                        }else if(Const.mouseMoved.equals(mouse.getMouseAction())){
+                            //鼠标移动事件
+                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                            System.out.println("处理鼠标移动事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                        }else if(Const.mouseDragged.equals(mouse.getMouseAction())){
+                            //鼠标拖拽事件
+                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                            System.out.println("处理鼠标拖拽事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                        }else{
+                            System.out.println("未知鼠标事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                        }
+                    } catch (AWTException e) {
+                        System.out.println("处理鼠标事件异常："+e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }
+    }
+
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         System.out.println("客户端异常！！！");
+        JOptionPane.showMessageDialog(null,"客户端异常，请重启软件");
         cause.printStackTrace();
         ctx.close();
     }

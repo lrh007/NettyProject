@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="NettyProject:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/NettyProject_jar</output-path>
+    <root id="root">
+      <element id="archive" name="NettyProject.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+        </element>
+        <element id="module-output" name="NettyProject" />
+      </element>
+      <element id="library" level="project" name="Maven: io.netty:netty-all:4.1.43.Final" />
+    </root>
+  </artifact>
+</component>

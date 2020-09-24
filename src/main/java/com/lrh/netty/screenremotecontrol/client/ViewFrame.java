@@ -82,6 +82,7 @@ public class ViewFrame {
     private void addListener(){
         ComponentListener.closeViewFrameListener(jFrame,MainFrame.friendName);
         ComponentListener.viewFrameMouseListener(jLabel,MainFrame.friendName);
+        ComponentListener.viewFrameKeyBoardListener(jLabel,MainFrame.friendName);
 
     }
 

@@ -24,7 +24,7 @@ public class Const {
      * 服务器ip
      * @Author lrh 2020/9/22 17:30
      */
-    public static final String SERVER_HOST = "127.0.0.1";
+    public static final String SERVER_HOST = "10.238.112.190";
     /**
      * 服务器端口号
      * @Author lrh 2020/9/22 17:31
@@ -107,6 +107,81 @@ public class Const {
      * @Author lrh 2020/9/23 11:14
      */
     public static final int STATUS_NOT_FOUND = 404;
+    /**   
+     * 发送数据的间隔，单位毫秒
+     * @Author lrh 2020/9/24 14:36
+     */
+    public static final int SEND_DATA_INTERVAL = 200;
+    /**   
+     * 鼠标X坐标
+     * @Author lrh 2020/9/24 14:43
+     */
+    public static int MOUSE_X = 0;
+    /**   
+     * 鼠标Y坐标
+     * @Author lrh 2020/9/24 14:43
+     */
+    public static int MOUSE_Y = 0;
+    /**   
+     * 鼠标滚轮转动的距离
+     * @Author lrh 2020/9/24 16:06
+     */
+    public static int MOUSE_WHILEAMT = 0;
+    /**   
+     * 鼠标事件
+     * @Author lrh 2020/9/24 14:45
+     */
+    public static String mouseAction;
+    /**   
+     * 鼠标事件类型，左键1，中建2，右键3
+     * @Author lrh 2020/9/24 15:25
+     */
+    public static int mouseType;
+    /**   
+     * 鼠标拖拽事件
+     * @Author lrh 2020/9/24 15:10
+     */
+    public static final String mouseDragged = "mouseDragged";
+    /**   
+     * 鼠标移动事件
+     * @Author lrh 2020/9/24 15:10
+     */
+    public static final String mouseMoved = "mouseMoved";
+    /**   
+     * 鼠标滚轮滑动事件
+     * @Author lrh 2020/9/24 15:11
+     */
+    public static final String mouseWheelMoved = "mouseWheelMoved";
+    /**   
+     * 鼠标点击事件
+     * @Author lrh 2020/9/24 15:12
+     */
+    public static final String mouseClicked = "mouseClicked";
+    /**   
+     * 鼠标按下事件
+     * @Author lrh 2020/9/24 15:12
+     */
+    public static final String mousePressed = "mousePressed";
+    /**   
+     * 鼠标松开事件
+     * @Author lrh 2020/9/24 15:18
+     */
+    public static final String mouseReleased = "mouseReleased";
+    /**
+     * 鼠标发送消息时，自己的客户端名称
+     * @Author lrh 2020/9/24 17:14
+     */
+    public static String mouseSendClientName = null;
+    /**
+     * 鼠标发送消息时，接受数据的客户端名称
+     * @Author lrh 2020/9/24 17:15
+     */
+    public static String mouseReceiveClientName = null;
     
+    /**   
+     * 键盘事件
+     * @Author lrh 2020/9/24 14:48
+     */
+    public static String keyBoardAction;
 
 }

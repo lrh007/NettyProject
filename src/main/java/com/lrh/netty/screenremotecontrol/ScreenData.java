@@ -1,6 +1,8 @@
 package com.lrh.netty.screenremotecontrol;
 
-import java.awt.image.BufferedImage;
+import com.lrh.netty.screenremotecontrol.client.KeyBoard;
+import com.lrh.netty.screenremotecontrol.client.Mouse;
+
 import java.io.Serializable;
 
 /**
@@ -34,16 +36,43 @@ public class ScreenData implements Serializable {
      * @Author lrh 2020/9/23 16:05
      */
     private String imageData;
+    /**
+     * 鼠标事件
+     * @Author lrh 2020/9/24 15:35
+     */
+    private Mouse mouse;
+    /**
+     * 键盘事件
+     * @Author lrh 2020/9/24 15:36
+     */
+    private KeyBoard keyBoard;
+
 
     public ScreenData() {
     }
 
-    public ScreenData(String sendName, String receiveName, String content, int status) {
+    public ScreenData(String sendName, String receiveName, String content, int status, String imageData, Mouse mouse, KeyBoard keyBoard) {
         this.sendName = sendName;
         this.receiveName = receiveName;
         this.content = content;
         this.status = status;
+        this.imageData = imageData;
+        this.mouse = mouse;
+        this.keyBoard = keyBoard;
     }
+
+    public ScreenData(String sendName, String receiveName, String content, int status, String imageData) {
+        this(sendName,receiveName,content,status,imageData,null,null);
+    }
+
+    public ScreenData(String sendName, String receiveName, String content, int status) {
+        this(sendName,receiveName,content,status,null);
+    }
+
+    public ScreenData(String sendName, String receiveName, int status, String imageData) {
+       this(sendName,receiveName,null,status,imageData);
+    }
+
     public ScreenData(String sendName, String receiveName, int status) {
         this(sendName,receiveName,null,status);
     }
@@ -90,5 +119,21 @@ public class ScreenData implements Serializable {
 
     public void setImageData(String imageData) {
         this.imageData = imageData;
+    }
+
+    public Mouse getMouse() {
+        return mouse;
+    }
+
+    public void setMouse(Mouse mouse) {
+        this.mouse = mouse;
+    }
+
+    public KeyBoard getKeyBoard() {
+        return keyBoard;
+    }
+
+    public void setKeyBoard(KeyBoard keyBoard) {
+        this.keyBoard = keyBoard;
     }
 }

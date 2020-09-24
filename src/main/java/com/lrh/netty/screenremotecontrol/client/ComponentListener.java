@@ -91,33 +91,39 @@ public class ComponentListener {
             @Override
             public void mouseDragged(MouseEvent e) {
                 System.out.println("鼠标拖拽。。。");
+                setMouseInfo(e.getX(),e.getY(),Const.mouseDragged,e.getButton(),0);
             }
 
             @Override
             public void mouseMoved(MouseEvent e) {
                 System.out.println("鼠标移动。。。");
+                setMouseInfo(e.getX(),e.getY(),Const.mouseMoved,e.getButton(),0);
             }
         });
         jLabel.addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                System.out.println("鼠标滚轮滑动。。。");
+                System.out.println("鼠标滚轮滑动。。。"+e.getScrollAmount()+","+e.getScrollType()+","+e.getWheelRotation()+","+e.getUnitsToScroll());
+                setMouseInfo(e.getX(),e.getY(),Const.mouseWheelMoved,e.getButton(),e.getUnitsToScroll());
             }
         });
         jLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                System.out.println("鼠标点击");
+                System.out.println("鼠标点击:"+e.getButton());
+                setMouseInfo(e.getX(),e.getY(),Const.mouseClicked,e.getButton(),0);
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
                 System.out.println("鼠标按下");
+                setMouseInfo(e.getX(),e.getY(),Const.mousePressed,e.getButton(),0);
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
                 System.out.println("鼠标松开");
+                setMouseInfo(e.getX(),e.getY(),Const.mouseReleased,e.getButton(),0);
             }
 
             @Override
@@ -133,5 +139,47 @@ public class ComponentListener {
             }
 
         });
+    }
+    /**
+     * 设置鼠标信息
+     * @Author lrh 2020/9/24 15:08
+     */
+    public static void setMouseInfo(int x,int y,String action,int mouseType,int mouseWhileAmt){
+//        Const.MOUSE_X = x;
+//        Const.MOUSE_Y = y;
+//        Const.mouseAction = action;
+//        Const.mouseType = mouseType;
+//        Const.MOUSE_WHILEAMT = mouseWhileAmt;
+        //向其他客户端发送鼠标消息
+        if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
+            ScreenData sc = new ScreenData(Const.mouseSendClientName,Const.mouseReceiveClientName,Const.STATUS_AGREE,null);
+            Mouse mouse = new Mouse(x,y,action,mouseType,mouseWhileAmt);
+            sc.setMouse(mouse);
+            ScreenClient.serverChannel.writeAndFlush(sc);
+        }
+    }
+
+    /**   
+     * ViewFrame 键盘事件监听
+     * @Author lrh 2020/9/24 14:49
+     */
+    public static void viewFrameKeyBoardListener(JLabel jLabel, JTextField friendName) {
+        jLabel.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                System.out.println("键盘按键类型"+e);
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                System.out.println("键盘按键按下");
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                System.out.println("键盘按键释放");
+            }
+        });
+
     }
 }
