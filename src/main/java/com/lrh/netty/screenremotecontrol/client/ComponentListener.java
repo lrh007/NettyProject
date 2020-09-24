@@ -1,12 +1,10 @@
 package com.lrh.netty.screenremotecontrol.client;
 
 import com.lrh.netty.screenremotecontrol.ScreenData;
+import io.netty.channel.ChannelFuture;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
 /**
  * 组件的事件监听
@@ -49,13 +47,18 @@ public class ComponentListener {
      * 关闭MainFrame窗口时调用
      * @Author lrh 2020/9/23 18:08
      */
-    public static void closeMainFrameListener(JFrame jFrame,String clientName) {
+    public static void closeMainFrameListener(JFrame jFrame,JTextField friendName) {
         jFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
-                    ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName,clientName,Const.STATUS_CLOSE));
+                    if(!"".equals(friendName.getText().trim())){
+                        ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName, friendName.getText().trim(), Const.STATUS_CLOSE));
+                    }else{
+                        ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName, Const.friendClientName, Const.STATUS_CLOSE));
+                    }
                 }
+                System.out.println("关闭MainFrame,myClientName="+Const.myClientName+",friend="+Const.friendClientName+",client="+friendName.getText().trim());
                 System.exit(0);
             }
         });
@@ -64,15 +67,71 @@ public class ComponentListener {
      * 关闭ViewFrame窗口时调用
      * @Author lrh 2020/9/23 18:08
      */
-    public static void closeViewFrameListener(JFrame jFrame,String clientName) {
+    public static void closeViewFrameListener(JFrame jFrame,JTextField friendName) {
         jFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
-                    ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName,clientName,Const.STATUS_CLOSE));
+                    if(!"".equals(friendName.getText().trim())){
+                        ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName, friendName.getText().trim(), Const.STATUS_CLOSE));
+                    }else{
+                        ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName, Const.friendClientName, Const.STATUS_CLOSE));
+                    }
                 }
                 System.exit(0);
             }
+        });
+    }
+    /**   
+     * viewFrame 鼠标事件监听
+     * @Author lrh 2020/9/24 9:33
+     */
+    public static void viewFrameMouseListener(JLabel jLabel, JTextField friendName) {
+        jLabel.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                System.out.println("鼠标拖拽。。。");
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                System.out.println("鼠标移动。。。");
+            }
+        });
+        jLabel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                System.out.println("鼠标滚轮滑动。。。");
+            }
+        });
+        jLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                System.out.println("鼠标点击");
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                System.out.println("鼠标按下");
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                System.out.println("鼠标松开");
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                System.out.println("鼠标进入组件");
+                Const.MOUSE_ON = true;
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                System.out.println("鼠标退出组件");
+                Const.MOUSE_ON = false;
+            }
+
         });
     }
 }

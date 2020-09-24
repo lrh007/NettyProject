@@ -22,7 +22,10 @@ import static java.awt.Frame.ICONIFIED;
  */
 public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData> {
 
-
+    /**   
+     * 用来判断MainFrame是否已经最小化
+     * @Author lrh 2020/9/24 9:23
+     */
     private static boolean show = false;
 
     @Override
@@ -53,6 +56,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
             //同意连接，开始发送数据
             if(i == JOptionPane.YES_OPTION){
 //                ctx.writeAndFlush(new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE));
+                Const.friendClientName = screenData.getSendName();
                 //截图发送数据
                 sendData(ctx,screenData);
             }else {
@@ -64,6 +68,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
             JOptionPane.showMessageDialog(null,"对方拒绝了您的连接");
         }else if(screenData.getStatus() == Const.STATUS_CLOSE){
             JOptionPane.showMessageDialog(null,"连接断开，请重新连接");
+            Const.CONNECT_CLOSE = true;
         }else if(screenData.getStatus() == Const.STATUS_AGREE){
             System.out.println("对方同意连接，将主窗体最小化，并且显示图像窗口");
             //对方同意连接，将主窗体最小话，并且显示图像窗口
@@ -92,7 +97,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true){
+                while(!Const.CONNECT_CLOSE){
                     try {
                         System.out.println("发送数据。。。");
                         Rectangle rectangle = new Rectangle(screenSize);
@@ -109,9 +114,9 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
-//        ImageIO.write(screenCapture, "png", new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.png"));
                 }
+                //将标识复位
+                Const.CONNECT_CLOSE = false;
             }
         }).start();
     }

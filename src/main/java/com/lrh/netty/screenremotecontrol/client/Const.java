@@ -14,6 +14,11 @@ public class Const {
      * @Author lrh 2020/9/22 9:55
      */
     public static String myClientName;
+    /**   
+     * 其他客户端的名称
+     * @Author lrh 2020/9/24 10:16
+     */
+    public static String friendClientName;
 
     /**
      * 服务器ip
@@ -40,7 +45,11 @@ public class Const {
      * @Author lrh 2020/9/23 18:16
      */
     public static boolean CONNECT_CLOSE = false;
-    
+    /**   
+     * 鼠标是否在ViewFrame上的标识
+     * @Author lrh 2020/9/24 9:25
+     */
+    public static boolean MOUSE_ON = false;
     /**   
      * 窗体宽度
      * @Author lrh 2020/9/22 16:00

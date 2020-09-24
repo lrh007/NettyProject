@@ -1,5 +1,6 @@
 package com.lrh.netty.screenremotecontrol.client;
 
+import com.lrh.netty.screenremotecontrol.ScreenData;
 import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
@@ -8,6 +9,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
@@ -35,6 +37,7 @@ public class ViewFrame {
             System.out.println("系统界面风格设置失败");
         }
         init();
+        addListener();
     }
     
     /**   
@@ -46,8 +49,8 @@ public class ViewFrame {
         jFrame.setLocation((int)screenSize.getWidth()/2-Const.VIEW_FRAME_WIDTH/2,(int)screenSize.getHeight()/2-Const.VIEW_FRAME_HEIGHT/2);
         jFrame.setSize(Const.VIEW_FRAME_WIDTH,Const.VIEW_FRAME_HEIGHT);
         jFrame.setExtendedState(MAXIMIZED_BOTH);//窗口启动之后最大化
-        jLabel.setBackground(Color.BLACK); //设置背景色为黑色
         jLabel.setOpaque(true);
+        jLabel.setBackground(Color.BLACK); //设置背景色为黑色
         jPanel.add(jLabel);
         jFrame.add(jPanel);
         jFrame.setVisible(true);
@@ -77,12 +80,23 @@ public class ViewFrame {
      * @Author lrh 2020/9/22 16:22
      */
     private void addListener(){
-        ComponentListener.closeViewFrameListener(jFrame,MainFrame.friendName.getText().trim());
+        ComponentListener.closeViewFrameListener(jFrame,MainFrame.friendName);
+        ComponentListener.viewFrameMouseListener(jLabel,MainFrame.friendName);
+
     }
 
     public static void main(String[] args) throws AWTException, IOException, InterruptedException {
-       INSTANCE();
-       Thread.sleep(1000000);
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Robot robot = new Robot();
+        Rectangle rectangle = new Rectangle(screenSize);
+        BufferedImage screenCapture = robot.createScreenCapture(rectangle);
+        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+        ImageIO.write(screenCapture,"jpg",byteArrayStream);
+        String imageData = Base64.getEncoder().encodeToString(byteArrayStream.toByteArray()); ////对图片进行编码
+        System.out.println("字符个数= "+imageData.length());
+        System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
+        System.out.println(imageData);
+        INSTANCE().showView(imageData);
     }
 
 

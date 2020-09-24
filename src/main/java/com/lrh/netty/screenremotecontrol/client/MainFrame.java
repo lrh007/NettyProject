@@ -73,7 +73,7 @@ public class MainFrame {
      */
     private void addListener(){
         ComponentListener.connectServerListener(connectBtn,friendName,myClientName);
-        ComponentListener.closeMainFrameListener(jFrame,friendName.getText().trim());
+        ComponentListener.closeMainFrameListener(jFrame,friendName);
     }
     /**   
      * 设置普通提示信息
