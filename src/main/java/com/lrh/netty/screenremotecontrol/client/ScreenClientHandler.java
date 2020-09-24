@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.text.View;
 
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
@@ -133,50 +134,66 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
      */
     private void handlerMouseEvent(Mouse mouse){
         if(mouse != null){
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Robot robot = new Robot();
-                        if(Const.mouseClicked.equals(mouse.getMouseAction())){
-                            //鼠标点击事件,包含按下、松开两个动作
-                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
-                            robot.mousePress(mouse.getMouseType());
-                            robot.mouseRelease(mouse.getMouseType());
-                            System.out.println("处理鼠标点击事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
-                        }else if(Const.mousePressed.equals(mouse.getMouseAction())){
-                            //鼠标按下事件
-                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
-                            robot.mousePress(mouse.getMouseType());
-                            System.out.println("处理鼠标按下事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
-                        }else if(Const.mouseReleased.equals(mouse.getMouseAction())){
-                            //鼠标释放事件
-                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
-                            robot.mouseRelease(mouse.getMouseType());
-                            System.out.println("处理鼠标释放事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
-                        }else if(Const.mouseWheelMoved.equals(mouse.getMouseAction())){
-                            //鼠标滚轮滑动事件
-                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
-                            robot.mouseWheel(mouse.getMouseWhileAmt());
-                            System.out.println("处理鼠标滚轮滑动事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
-                        }else if(Const.mouseMoved.equals(mouse.getMouseAction())){
-                            //鼠标移动事件
-                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
-                            System.out.println("处理鼠标移动事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
-                        }else if(Const.mouseDragged.equals(mouse.getMouseAction())){
-                            //鼠标拖拽事件
-                            robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
-                            System.out.println("处理鼠标拖拽事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
-                        }else{
-                            System.out.println("未知鼠标事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
-                        }
-                    } catch (AWTException e) {
-                        System.out.println("处理鼠标事件异常："+e.getMessage());
-                        e.printStackTrace();
-                    }
+            try {
+                Robot robot = new Robot();
+                int buttons = mouseBtnTypeConvert(mouse.getMouseType()); //鼠标按键类型转换
+                if(Const.mouseClicked.equals(mouse.getMouseAction())){
+                    //鼠标点击事件,包含按下、松开两个动作
+                    robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                    robot.mousePress(buttons);
+                    robot.mouseRelease(buttons);
+                    System.out.println("处理鼠标点击事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                }else if(Const.mousePressed.equals(mouse.getMouseAction())){
+                    //鼠标按下事件
+                    robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                    robot.mousePress(buttons);
+                    System.out.println("处理鼠标按下事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                }else if(Const.mouseReleased.equals(mouse.getMouseAction())){
+                    //鼠标释放事件
+                    robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                    robot.mouseRelease(buttons);
+                    System.out.println("处理鼠标释放事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                }else if(Const.mouseWheelMoved.equals(mouse.getMouseAction())){
+                    //鼠标滚轮滑动事件
+                    robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                    robot.mouseWheel(mouse.getMouseWhileAmt());
+                    System.out.println("处理鼠标滚轮滑动事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                }else if(Const.mouseMoved.equals(mouse.getMouseAction())){
+                    //鼠标移动事件
+                    robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                    System.out.println("处理鼠标移动事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                }else if(Const.mouseDragged.equals(mouse.getMouseAction())){
+                    //鼠标拖拽事件
+                    robot.mouseMove(mouse.getMouseX(),mouse.getMouseY());
+                    System.out.println("处理鼠标拖拽事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
+                }else{
+                    System.out.println("未知鼠标事件：[x="+mouse.getMouseX()+",y="+mouse.getMouseY()+",type="+mouse.getMouseType()+",action="+mouse.getMouseAction()+"]");
                 }
-            }).start();
+            } catch (AWTException e) {
+                System.out.println("处理鼠标事件异常："+e.getMessage());
+                e.printStackTrace();
+            }
         }
+    }
+    
+    /**   
+     * 鼠标按键类型转换
+     * @Author lrh 2020/9/24 17:54
+     */
+    private int mouseBtnTypeConvert(int mouseType){
+        //鼠标左键
+        if(mouseType == 1){
+            return InputEvent.BUTTON1_MASK;
+        }
+        //鼠标中键
+        if(mouseType == 2){
+            return InputEvent.BUTTON2_MASK;
+        }
+        //鼠标右键
+        if(mouseType == 3){
+            return InputEvent.BUTTON3_MASK;
+        }
+        return -1;
     }
 
     @Override
