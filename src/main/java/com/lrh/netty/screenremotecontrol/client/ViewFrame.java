@@ -85,7 +85,7 @@ public class ViewFrame {
     private void addListener(){
         ComponentListener.closeViewFrameListener(jFrame,MainFrame.friendName);
         ComponentListener.viewFrameMouseListener(jLabel,MainFrame.friendName);
-        ComponentListener.viewFrameKeyBoardListener(jLabel,MainFrame.friendName);
+        ComponentListener.viewFrameKeyBoardListener(MainFrame.friendName);
 
     }
 
@@ -110,7 +110,7 @@ public class ViewFrame {
         System.out.println("压缩之后图片大小="+Util.encodeAndCompress(byteArrayStream.toByteArray()).getBytes().length/1024);
         System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
         System.out.println(imageData);
-        INSTANCE().showView(imageData);
+        INSTANCE().showView(Util.encodeAndCompress(byteArrayStream.toByteArray()));
 //        INSTANCE();
 
 //        Thumbnails.of(screenCapture).scale(1f).outputQuality(0.25f).outputFormat("jpg").toOutputStream(byteArrayStream);

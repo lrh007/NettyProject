@@ -3,6 +3,7 @@ package com.lrh.netty.screenremotecontrol.client;
 import com.lrh.netty.screenremotecontrol.ScreenData;
 import com.lrh.netty.screenremotecontrol.client.bean.Const;
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
+import com.lrh.netty.screenremotecontrol.client.bean.KeyBoard;
 import com.lrh.netty.screenremotecontrol.client.bean.Mouse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -13,6 +14,7 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 
@@ -86,6 +88,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                 ViewFrame.INSTANCE().showView(screenData.getImageData().getData());
             }
             handlerMouseEvent(screenData.getMouse());
+            handlerKeyBoardEvent(screenData.getKeyBoard());
         }
     }
     /**
@@ -198,6 +201,28 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
         return -1;
     }
 
+    /**   
+     * 处理键盘事件
+     * @Author lrh 2020/9/25 17:35
+     */
+    private void handlerKeyBoardEvent(KeyBoard keyBoard){
+        if(keyBoard != null){
+            try {
+                Robot robot = new Robot();
+                //键盘按下事件
+                if(keyBoard.getKeyAction() == KeyEvent.KEY_PRESSED){
+                    robot.keyPress(keyBoard.getKeyCode());
+                }
+                //键盘松开事件
+                if(keyBoard.getKeyAction() == KeyEvent.KEY_RELEASED){
+                    robot.keyRelease(keyBoard.getKeyCode());
+                }
+
+            } catch (AWTException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         System.out.println("客户端异常！！！");

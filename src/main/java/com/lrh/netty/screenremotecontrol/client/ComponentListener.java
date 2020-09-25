@@ -2,9 +2,11 @@ package com.lrh.netty.screenremotecontrol.client;
 
 import com.lrh.netty.screenremotecontrol.ScreenData;
 import com.lrh.netty.screenremotecontrol.client.bean.Const;
+import com.lrh.netty.screenremotecontrol.client.bean.KeyBoard;
 import com.lrh.netty.screenremotecontrol.client.bean.Mouse;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 
 /**
@@ -159,23 +161,27 @@ public class ComponentListener {
      * ViewFrame 键盘事件监听
      * @Author lrh 2020/9/24 14:49
      */
-    public static void viewFrameKeyBoardListener(JLabel jLabel, JTextField friendName) {
-        jLabel.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                System.out.println("键盘按键类型"+e);
+    public static void viewFrameKeyBoardListener(JTextField friendName) {
+        Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            public void eventDispatched(AWTEvent event) {
+                //只有鼠标在视图上面的时候才记录键盘信息
+                if(Const.MOUSE_ON){
+                    //向其他客户端发送键盘消息
+                    if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
+                        ScreenData sc = new ScreenData(Const.mouseSendClientName,Const.mouseReceiveClientName,Const.STATUS_AGREE,null);
+                        KeyEvent keyEvent = (KeyEvent) event;
+                        KeyBoard keyBoard = new KeyBoard(keyEvent.getKeyCode(),keyEvent.getID());
+                        sc.setKeyBoard(keyBoard);
+                        ScreenClient.serverChannel.writeAndFlush(sc);
+                    }
+                }
+//                if (((KeyEvent) event).getID() == KeyEvent.KEY_PRESSED) {
+//                    //放入自己的键盘监听事件
+//                    //((KeyEvent) event).getKeyCode();// 获取按键的code
+//                    //((KeyEvent) event).getKeyChar();// 获取按键的字符
+//                    System.out.println("键盘按键类型"+((KeyEvent) event).getKeyCode());
+//                }
             }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                System.out.println("键盘按键按下");
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                System.out.println("键盘按键释放");
-            }
-        });
-
+        }, AWTEvent.KEY_EVENT_MASK);
     }
 }

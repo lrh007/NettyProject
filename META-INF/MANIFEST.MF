@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
 Main-Class: com.lrh.netty.screenremotecontrol.client.MainFrame
-Class-Path: netty-all-4.1.43.Final.jar
+Class-Path: thumbnailator-0.4.8.jar netty-all-4.1.43.Final.jar
 

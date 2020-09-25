@@ -8,6 +8,7 @@
         </element>
         <element id="module-output" name="NettyProject" />
       </element>
+      <element id="library" level="project" name="Maven: net.coobird:thumbnailator:0.4.8" />
       <element id="library" level="project" name="Maven: io.netty:netty-all:4.1.43.Final" />
     </root>
   </artifact>
