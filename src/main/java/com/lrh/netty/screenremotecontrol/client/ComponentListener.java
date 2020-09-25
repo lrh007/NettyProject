@@ -1,7 +1,8 @@
 package com.lrh.netty.screenremotecontrol.client;
 
 import com.lrh.netty.screenremotecontrol.ScreenData;
-import io.netty.channel.ChannelFuture;
+import com.lrh.netty.screenremotecontrol.client.bean.Const;
+import com.lrh.netty.screenremotecontrol.client.bean.Mouse;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -145,11 +146,6 @@ public class ComponentListener {
      * @Author lrh 2020/9/24 15:08
      */
     public static void setMouseInfo(int x,int y,String action,int mouseType,int mouseWhileAmt){
-//        Const.MOUSE_X = x;
-//        Const.MOUSE_Y = y;
-//        Const.mouseAction = action;
-//        Const.mouseType = mouseType;
-//        Const.MOUSE_WHILEAMT = mouseWhileAmt;
         //向其他客户端发送鼠标消息
         if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
             ScreenData sc = new ScreenData(Const.mouseSendClientName,Const.mouseReceiveClientName,Const.STATUS_AGREE,null);

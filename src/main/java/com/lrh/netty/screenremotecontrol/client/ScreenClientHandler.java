@@ -1,20 +1,20 @@
 package com.lrh.netty.screenremotecontrol.client;
 
 import com.lrh.netty.screenremotecontrol.ScreenData;
+import com.lrh.netty.screenremotecontrol.client.bean.Const;
+import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
+import com.lrh.netty.screenremotecontrol.client.bean.Mouse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import sun.misc.BASE64Encoder;
+import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.text.View;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.util.Base64;
-import java.util.concurrent.TimeUnit;
 
 import static java.awt.Frame.ICONIFIED;
 
@@ -37,7 +37,6 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
             System.out.println("服务器分配的名称： "+Const.myClientName);
         }else{
             if(screenData.getSendName().equalsIgnoreCase(Const.myClientName) && Const.STATUS_NOT_FOUND == screenData.getStatus()){
-//                System.out.println("自己说： "+screenData.getContent());
                 JOptionPane.showMessageDialog(null,screenData.getReceiveName()+"不在线");
             }else{
                 System.out.println(screenData.getSendName()+"说： "+screenData.getContent()+"，状态="+screenData.getStatus());
@@ -68,8 +67,9 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
         }else if(screenData.getStatus() == Const.STATUS_REJECT){
             JOptionPane.showMessageDialog(null,"对方拒绝了您的连接");
         }else if(screenData.getStatus() == Const.STATUS_CLOSE){
-            JOptionPane.showMessageDialog(null,"连接断开，请重新连接");
             Const.CONNECT_CLOSE = true;
+            ViewFrame.dispose(); //销毁窗体，释放资源
+            JOptionPane.showMessageDialog(null,"连接断开，请重新连接");
         }else if(screenData.getStatus() == Const.STATUS_AGREE){
             System.out.println("对方同意连接，将主窗体最小化，并且显示图像窗口");
             Const.mouseSendClientName = screenData.getReceiveName();
@@ -82,8 +82,8 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
             //展示图像
             //因为鼠标事件也需要发送消息，所以这里要判断一下
             if(screenData.getImageData() != null){
-                System.out.println("图片大小= "+screenData.getImageData().length()+",大小="+screenData.getImageData().getBytes().length/1024);
-                ViewFrame.INSTANCE().showView(screenData.getImageData());
+                System.out.println("图片大小= "+screenData.getImageData().getData().length()+",大小="+screenData.getImageData().getData().getBytes().length/1024);
+                ViewFrame.INSTANCE().showView(screenData.getImageData().getData());
             }
             handlerMouseEvent(screenData.getMouse());
         }
@@ -103,18 +103,20 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
         Robot finalRobot = robot;
         Rectangle rectangle = new Rectangle(screenSize);
         ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+        System.out.println("发送数据,连接关闭="+Const.CONNECT_CLOSE);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while(!Const.CONNECT_CLOSE){
                     try {
-                        System.out.println("发送数据。。。");
+                        System.out.println("发送数据,CONNECT_CLOSE="+Const.CONNECT_CLOSE);
                         BufferedImage screenCapture = finalRobot.createScreenCapture(rectangle);
-                        ImageIO.write(screenCapture,"jpg",byteArrayStream);
-                        String imageData = Base64.getEncoder().encodeToString(byteArrayStream.toByteArray()); ////对图片进行编码
-//                        imageData = Util.compress(imageData); //压缩字符串
+//                        ImageIO.write(screenCapture,"jpg",byteArrayStream);
+                        Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").toOutputStream(byteArrayStream);
+                        String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
                         System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-                        ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,imageData);
+                        ImageData dataImage = new ImageData(imageData,false);
+                        ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
                         ctx.writeAndFlush(sc);
                         byteArrayStream.reset();
                         Thread.sleep(Const.SEND_DATA_INTERVAL);

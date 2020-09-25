@@ -1,4 +1,4 @@
-package com.lrh.netty.screenremotecontrol.client;
+package com.lrh.netty.screenremotecontrol.client.bean;
 
 import java.awt.*;
 
@@ -24,7 +24,7 @@ public class Const {
      * 服务器ip
      * @Author lrh 2020/9/22 17:30
      */
-    public static final String SERVER_HOST = "10.238.112.190";
+    public static final String SERVER_HOST = "127.0.0.1";
     /**
      * 服务器端口号
      * @Author lrh 2020/9/22 17:31
@@ -83,11 +83,6 @@ public class Const {
      */
     public static final int STATUS_RECEIVE = 1;
     /**
-     * 给客户端发送，发送数据请求
-     * @Author lrh 2020/9/23 10:11
-     */
-    public static final int STATUS_SEND = 2;
-    /**   
      * 客户端之间断开连接，不用再相互传输数据了
      * @Author lrh 2020/9/23 13:57
      */
@@ -111,32 +106,8 @@ public class Const {
      * 发送数据的间隔，单位毫秒
      * @Author lrh 2020/9/24 14:36
      */
-    public static final int SEND_DATA_INTERVAL = 200;
-    /**   
-     * 鼠标X坐标
-     * @Author lrh 2020/9/24 14:43
-     */
-    public static int MOUSE_X = 0;
-    /**   
-     * 鼠标Y坐标
-     * @Author lrh 2020/9/24 14:43
-     */
-    public static int MOUSE_Y = 0;
-    /**   
-     * 鼠标滚轮转动的距离
-     * @Author lrh 2020/9/24 16:06
-     */
-    public static int MOUSE_WHILEAMT = 0;
-    /**   
-     * 鼠标事件
-     * @Author lrh 2020/9/24 14:45
-     */
-    public static String mouseAction;
-    /**   
-     * 鼠标事件类型，左键1，中建2，右键3
-     * @Author lrh 2020/9/24 15:25
-     */
-    public static int mouseType;
+    public static final int SEND_DATA_INTERVAL = 30;
+
     /**   
      * 鼠标拖拽事件
      * @Author lrh 2020/9/24 15:10

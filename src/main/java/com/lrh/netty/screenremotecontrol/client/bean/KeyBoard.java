@@ -1,4 +1,4 @@
-package com.lrh.netty.screenremotecontrol.client;
+package com.lrh.netty.screenremotecontrol.client.bean;
 
 import java.io.Serializable;
 

@@ -1,5 +1,6 @@
 package com.lrh.netty.screenremotecontrol.client;
 
+import com.lrh.netty.screenremotecontrol.client.bean.Const;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

@@ -1,7 +1,8 @@
 package com.lrh.netty.screenremotecontrol;
 
-import com.lrh.netty.screenremotecontrol.client.KeyBoard;
-import com.lrh.netty.screenremotecontrol.client.Mouse;
+import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
+import com.lrh.netty.screenremotecontrol.client.bean.KeyBoard;
+import com.lrh.netty.screenremotecontrol.client.bean.Mouse;
 
 import java.io.Serializable;
 
@@ -35,7 +36,7 @@ public class ScreenData implements Serializable {
      * 图片数据
      * @Author lrh 2020/9/23 16:05
      */
-    private String imageData;
+    private ImageData imageData;
     /**
      * 鼠标事件
      * @Author lrh 2020/9/24 15:35
@@ -51,7 +52,7 @@ public class ScreenData implements Serializable {
     public ScreenData() {
     }
 
-    public ScreenData(String sendName, String receiveName, String content, int status, String imageData, Mouse mouse, KeyBoard keyBoard) {
+    public ScreenData(String sendName, String receiveName, String content, int status, ImageData imageData, Mouse mouse, KeyBoard keyBoard) {
         this.sendName = sendName;
         this.receiveName = receiveName;
         this.content = content;
@@ -61,7 +62,7 @@ public class ScreenData implements Serializable {
         this.keyBoard = keyBoard;
     }
 
-    public ScreenData(String sendName, String receiveName, String content, int status, String imageData) {
+    public ScreenData(String sendName, String receiveName, String content, int status, ImageData imageData) {
         this(sendName,receiveName,content,status,imageData,null,null);
     }
 
@@ -69,7 +70,7 @@ public class ScreenData implements Serializable {
         this(sendName,receiveName,content,status,null);
     }
 
-    public ScreenData(String sendName, String receiveName, int status, String imageData) {
+    public ScreenData(String sendName, String receiveName, int status, ImageData imageData) {
        this(sendName,receiveName,null,status,imageData);
     }
 
@@ -113,11 +114,11 @@ public class ScreenData implements Serializable {
         this.status = status;
     }
 
-    public String getImageData() {
+    public ImageData getImageData() {
         return imageData;
     }
 
-    public void setImageData(String imageData) {
+    public void setImageData(ImageData imageData) {
         this.imageData = imageData;
     }
 

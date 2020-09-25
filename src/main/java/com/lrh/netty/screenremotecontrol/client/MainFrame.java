@@ -1,5 +1,7 @@
 package com.lrh.netty.screenremotecontrol.client;
 
+import com.lrh.netty.screenremotecontrol.client.bean.Const;
+
 import javax.swing.*;
 import java.awt.*;
 

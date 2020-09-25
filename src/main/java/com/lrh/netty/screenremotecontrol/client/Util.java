@@ -3,6 +3,7 @@ package com.lrh.netty.screenremotecontrol.client;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -39,7 +40,7 @@ public class Util {
                 }
             }
         }
-        return new sun.misc.BASE64Encoder().encode(out.toByteArray());
+       return Base64.getEncoder().encodeToString(out.toByteArray());
     }
 
     /**
@@ -58,7 +59,7 @@ public class Util {
         byte[] compressed = null;
         String decompressed = null;
         try {
-            compressed = new sun.misc.BASE64Decoder().decodeBuffer(compressedStr);
+            compressed = Base64.getDecoder().decode(compressedStr);
             in = new ByteArrayInputStream(compressed);
             ginzip = new GZIPInputStream(in);
             byte[] buffer = new byte[1024];
@@ -91,4 +92,21 @@ public class Util {
         }
         return decompressed;
     }
+    /**
+     * 编码和压缩字符串
+     * @Author lrh 2020/9/25 13:50
+     */
+    public static String encodeAndCompress(byte[] src){
+        String s = Base64.getEncoder().encodeToString(src);
+        return compress(s);
+    }
+    /**
+     * 解码和解压缩字符串
+     * @Author lrh 2020/9/25 13:50
+     */
+    public static byte[] decodeUnCompress(String data){
+        String s = uncompress(data);
+        return Base64.getDecoder().decode(s);
+    }
+
 }
