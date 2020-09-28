@@ -1,5 +1,6 @@
 package com.lrh.netty.screenremotecontrol.client.bean;
 
+import java.awt.image.BufferedImage;
 import java.io.Serializable;
 
 /**
@@ -18,13 +19,51 @@ public class ImageData implements Serializable {
      * @Author lrh 2020/9/25 13:33
      */
     private boolean isEnd;
+    /**
+     * 图片X坐标
+     * @Author lrh 2020/9/28 12:04
+     */
+    private int x;
+    /**
+     * 图片y坐标
+     * @Author lrh 2020/9/28 12:04
+     */
+    private int y;
+    /**
+     * 图片高度
+     * @Author lrh 2020/9/28 12:04
+     */
+    private int height;
+    /**
+     * 图片宽度
+     * @Author lrh 2020/9/28 12:04
+     */
+    private int width;
+    /**   
+     * 图片分割缓冲区，仅用于分割图片时使用
+     * @Author lrh 2020/9/28 12:12
+     */
+    private BufferedImage bufferedImage;
 
     public ImageData() {
     }
 
-    public ImageData(String data, boolean isEnd) {
+    public ImageData(String data, boolean isEnd, int x, int y, int height, int width, BufferedImage bufferedImage) {
         this.data = data;
         this.isEnd = isEnd;
+        this.x = x;
+        this.y = y;
+        this.height = height;
+        this.width = width;
+        this.bufferedImage = bufferedImage;
+    }
+
+    public ImageData(String data, boolean isEnd, int x, int y, int height, int width) {
+        this(data,isEnd,x,y,height,width,null);
+    }
+
+    public ImageData(String data, boolean isEnd) {
+        this(data,isEnd,0,0,0,0);
     }
 
     public String getData() {
@@ -41,5 +80,45 @@ public class ImageData implements Serializable {
 
     public void setEnd(boolean end) {
         isEnd = end;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public BufferedImage getBufferedImage() {
+        return bufferedImage;
+    }
+
+    public void setBufferedImage(BufferedImage bufferedImage) {
+        this.bufferedImage = bufferedImage;
     }
 }

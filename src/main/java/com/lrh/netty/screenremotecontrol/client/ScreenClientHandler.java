@@ -17,6 +17,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 import static java.awt.Frame.ICONIFIED;
 
@@ -85,7 +86,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
             //因为鼠标事件也需要发送消息，所以这里要判断一下
             if(screenData.getImageData() != null){
                 System.out.println("图片大小= "+screenData.getImageData().getData().length()+",大小="+screenData.getImageData().getData().getBytes().length/1024);
-                ViewFrame.INSTANCE().showView(screenData.getImageData().getData());
+                ViewFrame.INSTANCE().showView(screenData.getImageData());
             }
             handlerMouseEvent(screenData.getMouse());
             handlerKeyBoardEvent(screenData.getKeyBoard());
@@ -115,13 +116,19 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                         System.out.println("发送数据,CONNECT_CLOSE="+Const.CONNECT_CLOSE);
                         BufferedImage screenCapture = finalRobot.createScreenCapture(rectangle);
 //                        ImageIO.write(screenCapture,"jpg",byteArrayStream);
-                        Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").toOutputStream(byteArrayStream);
-                        String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
-                        System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-                        ImageData dataImage = new ImageData(imageData,false);
-                        ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
-                        ctx.writeAndFlush(sc);
-                        byteArrayStream.reset();
+//                        Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").toOutputStream(byteArrayStream);
+                        BufferedImage bufferedImage = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").asBufferedImage();
+                        //分割图片
+                        List<ImageData> imageDatas = Util.splitImage((int) (screenSize.width*0.9), (int) (screenSize.height *0.9),0, bufferedImage);
+                        for (ImageData data : imageDatas){
+                            ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
+                            String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
+                            System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
+                            ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null);
+                            ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
+                            ctx.writeAndFlush(sc);
+                            byteArrayStream.reset();
+                        }
                         Thread.sleep(Const.SEND_DATA_INTERVAL);
                     } catch (Exception e) {
                         e.printStackTrace();
