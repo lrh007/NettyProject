@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Base64;
+import java.util.*;
 import java.util.List;
 
 import static java.awt.Frame.MAXIMIZED_BOTH;
@@ -100,6 +100,7 @@ public class ViewFrame {
         Rectangle rectangle = new Rectangle(screenSize);
         ViewFrame instance = INSTANCE();
         ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+        Map<Integer, ImageData> beforeImageData = new HashMap<>(); //存放上一次的图片数据，用来和这次进行对比
         while (true){
 
             Thread.sleep(50);
@@ -109,14 +110,29 @@ public class ViewFrame {
 
 //        screenCapture = screenCapture.getSubimage(0, 0, 300, 300);
         //先把原图片缩小成原来的90%大小，质量为60%
-        BufferedImage bufferedImage1 = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").asBufferedImage();
+//        BufferedImage bufferedImage1 = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").asBufferedImage();
 
 //        ImageIO.write(screenCapture,"jpg",byteArrayStream);
 //        int marginLeft = (int) ((screenSize.getWidth() - screenSize.width*0.9));
         int marginLeft = 0;
-        List<ImageData> imageData1 = Util.splitImage((int) (screenSize.width*0.9), (int) (screenSize.height *0.9),marginLeft, bufferedImage1);
-        for (int i = 0; i < imageData1.size(); i++) {
-            ImageIO.write(imageData1.get(i).getBufferedImage(),"jpg",byteArrayStream);
+//        List<ImageData> imageData1 = Util.splitImage((int) (screenSize.width*0.9), (int) (screenSize.height *0.9),marginLeft, bufferedImage1);
+            Map<Integer, ImageData> imageData1 = Util.splitImageAndNum(screenSize.width, screenSize.height, marginLeft, screenCapture);
+            //如果是第一次，就将当前的数据保存
+            if(beforeImageData.size() == 0){
+                beforeImageData.putAll(imageData1);
+            }
+            for (int i = 0; i < imageData1.size(); i++) {
+               ImageData data = imageData1.get(i);
+                BufferedImage bufferedImage = data.getBufferedImage();
+                long s1 = System.currentTimeMillis();
+//                boolean b = Util.compareImageData(i, bufferedImage, beforeImageData);
+                BufferedImage xorImageData = Util.getXorImageData(i, bufferedImage, beforeImageData);
+                System.out.println("图片是否相同= "+xorImageData+",耗时="+(System.currentTimeMillis()-s1));
+                if(xorImageData == null){
+                    continue;
+                }
+                BufferedImage restoreXorImageData = Util.restoreXorImageData(bufferedImage, xorImageData);
+                ImageIO.write(restoreXorImageData,"jpg",byteArrayStream);
 //            ImageIO.write(imageData1.get(0).getBufferedImage(),"jpg",byteArrayStream);
     //        Thumbnails.of(imageData1.get(0).getBufferedImage()).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").toOutputStream(byteArrayStream);
             String imageData = Base64.getEncoder().encodeToString(byteArrayStream.toByteArray()); ////对图片进行编码
@@ -125,20 +141,20 @@ public class ViewFrame {
             System.out.println("转换之后图片大小="+imageData.getBytes().length/1024);
             System.out.println("压缩之后图片大小="+Util.encodeAndCompress(byteArrayStream.toByteArray()).getBytes().length/1024);
             System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-            System.out.println(imageData);
+//            System.out.println(imageData);
+            System.out.println("=======================");
     //        ViewFrame instance = INSTANCE();
     //        Graphics g = instance.jPanel.getBufferedImage().getGraphics();
 
-            ImageData data = imageData1.get(i);
             data.setData(Util.encodeAndCompress(byteArrayStream.toByteArray()));
             instance.jPanel.display(data);
             byteArrayStream.reset();
 //            g.drawImage(data.getBufferedImage(),data.getX(),data.getY(),data.getWidth(),data.getHeight(),null);
           }
+            instance.jPanel.repaint();
         }
 //        instance.showView(Util.encodeAndCompress(byteArrayStream.toByteArray()));
 //        INSTANCE();
-
 //        Thumbnails.of(screenCapture).scale(1f).outputQuality(0.25f).outputFormat("jpg").toOutputStream(byteArrayStream);
     }
 

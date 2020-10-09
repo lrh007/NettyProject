@@ -44,11 +44,16 @@ public class ImageData implements Serializable {
      * @Author lrh 2020/9/28 12:12
      */
     private BufferedImage bufferedImage;
+    /**
+     * 图片编号
+     * @Author lrh 2020/10/9 15:36
+     */
+    private int number;
 
     public ImageData() {
     }
 
-    public ImageData(String data, boolean isEnd, int x, int y, int height, int width, BufferedImage bufferedImage) {
+    public ImageData(String data, boolean isEnd, int x, int y, int height, int width, BufferedImage bufferedImage,int number) {
         this.data = data;
         this.isEnd = isEnd;
         this.x = x;
@@ -56,14 +61,15 @@ public class ImageData implements Serializable {
         this.height = height;
         this.width = width;
         this.bufferedImage = bufferedImage;
+        this.number = number;
     }
 
-    public ImageData(String data, boolean isEnd, int x, int y, int height, int width) {
-        this(data,isEnd,x,y,height,width,null);
+    public ImageData(String data, boolean isEnd, int x, int y, int height, int width,int number) {
+        this(data,isEnd,x,y,height,width,null,number);
     }
 
     public ImageData(String data, boolean isEnd) {
-        this(data,isEnd,0,0,0,0);
+        this(data,isEnd,0,0,0,0,0);
     }
 
     public String getData() {
@@ -120,5 +126,13 @@ public class ImageData implements Serializable {
 
     public void setBufferedImage(BufferedImage bufferedImage) {
         this.bufferedImage = bufferedImage;
+    }
+
+    public int getNumber() {
+        return number;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
     }
 }

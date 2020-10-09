@@ -8,7 +8,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 在jpanel上绘制图片
@@ -21,6 +22,11 @@ public class ImageJPanel extends JPanel {
      * @Author lrh 2020/9/28 12:40
      */
     private BufferedImage bufferedImage;
+    /**
+     * 存放上一次的图片数据，用来和这次进行对比
+     * @Author lrh 2020/10/9 15:11
+     */
+    private static Map<Integer, ImageData> beforeImageData = new HashMap<>();
     /**   
      * 画笔
      * @Author lrh 2020/9/28 14:15
@@ -50,12 +56,22 @@ public class ImageJPanel extends JPanel {
         if(og != null){
             super.paint(og);
             byte[] bytes = Util.decodeUnCompress(data.getData());
+            BufferedImage read = null;
             try {
-                BufferedImage read = ImageIO.read(new ByteArrayInputStream(bytes));
-                og.drawImage(read, data.getX(), data.getY(), data.getWidth(), data.getHeight(), this);
+                read = ImageIO.read(new ByteArrayInputStream(bytes));
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            //将图像异或还原
+            if(beforeImageData.get(data.getNumber()) != null){
+//                BufferedImage bufferedImage = Util.restoreXorImageData(beforeImageData.get(data.getNumber()).getBufferedImage(), read);
+                og.drawImage(read, data.getX(), data.getY(), data.getWidth(), data.getHeight(), this);
+            }else{
+                data.setBufferedImage(read);
+                beforeImageData.put(data.getNumber(),data);
+                og.drawImage(read, data.getX(), data.getY(), data.getWidth(), data.getHeight(), this);
+            }
+
         }
         Rectangle rc = new Rectangle(data.getX(),data.getY(),data.getWidth(),data.getHeight());
         this.repaint(rc);

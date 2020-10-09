@@ -17,7 +17,9 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.awt.Frame.ICONIFIED;
 
@@ -31,6 +33,11 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
      * @Author lrh 2020/9/24 9:23
      */
     private static boolean show = false;
+    /**
+     * 存放上一次的图片数据，用来和这次进行对比
+     * @Author lrh 2020/10/9 15:11
+     */
+    private static Map<Integer, ImageData> beforeImageData = new HashMap<>();
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ScreenData screenData) throws Exception {
@@ -107,24 +114,45 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
         Robot finalRobot = robot;
         Rectangle rectangle = new Rectangle(screenSize);
         ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+
         System.out.println("发送数据,连接关闭="+Const.CONNECT_CLOSE);
         new Thread(new Runnable() {
             @Override
             public void run() {
+                boolean first = false;
                 while(!Const.CONNECT_CLOSE){
                     try {
                         System.out.println("发送数据,CONNECT_CLOSE="+Const.CONNECT_CLOSE);
                         BufferedImage screenCapture = finalRobot.createScreenCapture(rectangle);
 //                        ImageIO.write(screenCapture,"jpg",byteArrayStream);
 //                        Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").toOutputStream(byteArrayStream);
-                        BufferedImage bufferedImage = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").asBufferedImage();
+//                        BufferedImage bufferedImage = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").asBufferedImage();
                         //分割图片
-                        List<ImageData> imageDatas = Util.splitImage((int) (screenSize.width*0.9), (int) (screenSize.height *0.9),0, bufferedImage);
-                        for (ImageData data : imageDatas){
+//                        List<ImageData> imageDatas = Util.splitImage((int) (screenSize.width*0.9), (int) (screenSize.height *0.9),0, bufferedImage);
+                        Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0, screenCapture);
+                        //如果是第一次，就将当前的数据保存
+                        if(beforeImageData.size() == 0){
+                            beforeImageData.putAll(imageDatas);
+                            first = true;
+                        }
+                        for (int i=0;i<imageDatas.size();i++){
+                            ImageData data = imageDatas.get(i);
+                            //第一次的时候先发送全部的图片过去，保证对方能完全展示出来所有图像
+                            if(!first){
+                                boolean b = Util.compareImageData(i, data.getBufferedImage(), beforeImageData);
+                                if(b){
+                                    continue;
+                                }
+                            }
+                            first = false;
+//                            BufferedImage xorImageData = Util.getXorImageData(i,  data.getBufferedImage(), beforeImageData);
+//                            if(xorImageData == null){
+//                                continue;
+//                            }
                             ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
                             String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
                             System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-                            ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null);
+                            ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,i);
                             ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
                             ctx.writeAndFlush(sc);
                             byteArrayStream.reset();
