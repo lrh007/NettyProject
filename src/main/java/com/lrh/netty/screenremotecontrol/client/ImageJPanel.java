@@ -6,6 +6,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -36,12 +37,6 @@ public class ImageJPanel extends JPanel {
 
     public ImageJPanel() {
     }
-
-//    @Override
-//    public void paint(Graphics g) {
-////        super.paint(g);
-//        g.drawImage(this.bufferedImage,0,0,this);
-//    }
     /**
      * 重新绘制图像
      * @Author lrh 2020/9/28 14:04
@@ -51,6 +46,7 @@ public class ImageJPanel extends JPanel {
             this.bufferedImage = (BufferedImage) this.createImage(this.getWidth(), this.getHeight());
             if(this.bufferedImage != null){
                 og = this.bufferedImage.getGraphics();
+                og.setColor(getBackground());
             }
         }
         if(og != null){
@@ -80,8 +76,8 @@ public class ImageJPanel extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
-//        super.paintComponent(g);
-        g.drawImage(this.bufferedImage,0,0,this);
+//        super.paintComponent(og);
+        g.drawImage(this.bufferedImage,0,0, this);
     }
 
     public BufferedImage getBufferedImage() {

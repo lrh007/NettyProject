@@ -212,10 +212,62 @@ public class Util {
         return image;
     }
 
+    /**   
+     * 通过map的key进行排序
+     * @Author lrh 2020/10/12 16:59
+     */
+    public static Map<Integer, ImageData> sortMapByKey(Map<Integer, ImageData> map) {
+        if (map == null || map.isEmpty()) {
+            return null;
+        }
+        Map<Integer, ImageData> sortMap = new TreeMap<Integer, ImageData>(
+                new Comparator<Integer>() {
+
+                    @Override
+                    public int compare(Integer o1, Integer o2) {
+                        return o1.compareTo(o2);
+                    }});
+        sortMap.putAll(map);
+
+        return sortMap;
+    }
+    /**   
+     * 将map中的value值转换成字节数据
+     * @Author lrh 2020/10/12 17:08
+     * @return
+     */
+    public static byte[] convertMapToBytes(Map<Integer, ImageData> map){
+        Set<Map.Entry<Integer, ImageData>> entries = map.entrySet();
+        int length = 0; //数组总长度
+        for (Map.Entry<Integer, ImageData> entry : entries){
+            ImageData data = entry.getValue();
+            byte[] bytes = Util.decodeUnCompress(data.getData());
+            length += bytes.length;
+        }
+        //通过总长度然后将数组合并到一起
+        byte[] allBytes = new byte[length];
+        int destPos = 0; //索引位置
+        for (Map.Entry<Integer, ImageData> entry : entries){
+            ImageData data = entry.getValue();
+            byte[] src = Util.decodeUnCompress(data.getData());
+            System.arraycopy(src,0,allBytes,destPos,src.length);
+        }
+        return allBytes;
+    }
+    
+
+
     public static void main(String[] args) {
-        int a = 20,b=20;
-        int c = a ^ b;
-        System.out.println(c);
-        System.out.println(b^c);
+        Map<Integer,ImageData> map = new HashMap<>();
+        map.put(1,null);
+        map.put(2,null);
+        map.put(7,null);
+        map.put(3,null);
+        Map<Integer, ImageData> dataMap = sortMapByKey(map);
+        System.out.println(dataMap);
+        Set<Map.Entry<Integer, ImageData>> entries = dataMap.entrySet();
+        for (Map.Entry<Integer, ImageData> imageData : entries){
+            System.out.println(imageData.getKey()+","+imageData.getValue());
+        }
     }
 }

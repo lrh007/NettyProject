@@ -8,6 +8,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -25,6 +26,11 @@ public class ViewFrame {
     private JFrame jFrame = new JFrame("view");
     private ImageJPanel jPanel = new ImageJPanel();
     private JLabel jLabel = new JLabel();
+    /**
+     * 存放上一次的图片数据，用来和这次进行对比
+     * @Author lrh 2020/10/9 15:11
+     */
+    private static Map<Integer, ImageData> beforeImageData = new HashMap<>();
 
     private ViewFrame() {
         try { // 使用当前系统的界面风格
@@ -47,11 +53,13 @@ public class ViewFrame {
         jFrame.setSize(Const.VIEW_FRAME_WIDTH,Const.VIEW_FRAME_HEIGHT);
         jFrame.setExtendedState(MAXIMIZED_BOTH);//窗口启动之后最大化
         jLabel.setOpaque(true);
+//        jFrame.setLayout(null);
         jLabel.setBackground(Color.BLACK); //设置背景色为黑色
 //        jPanel.setBackground(Color.BLACK);
-        jLabel.setSize(500,500);
-        jPanel.add(jLabel);
-        jFrame.add(jPanel);
+//        jLabel.setBounds(0,0,192,540);
+//        jPanel.add(jLabel);
+//        jFrame.add(jPanel);
+        jFrame.add(jLabel);
         jFrame.setVisible(true);
     }
     /**   
@@ -77,10 +85,19 @@ public class ViewFrame {
      * @Author lrh 2020/9/23 15:59
      */
     public void showView(ImageData imageData){
-//        byte[] bytes = Util.decodeUnCompress(imageData);
+//        byte[] bytes = Util.decodeUnCompress(imageData.getData());
 //        ImageIcon imageIcon = new ImageIcon(bytes);
 //        jLabel.setIcon(imageIcon);
-        jPanel.display(imageData);
+//        jPanel.display(imageData);
+
+        //每次发送过来的数据肯定是发送变化的图片
+        beforeImageData.put(imageData.getNumber(),imageData);
+        System.out.println("beforeImageData条数="+beforeImageData.size());
+        //将map通过key排序
+        Map<Integer, ImageData> sortMap = Util.sortMapByKey(beforeImageData);
+        byte[] bytes = Util.convertMapToBytes(sortMap);
+        ImageIcon imageIcon = new ImageIcon(bytes);
+        jLabel.setIcon(imageIcon);
     }
 
     /**
@@ -94,35 +111,43 @@ public class ViewFrame {
 
     }
 
-    public static void main(String[] args) throws AWTException, IOException, InterruptedException {
+    public static void main(String[] args) throws Exception {
+//        showImage1();
+        showImage2();
+    }
+
+
+    public static void showImage1()throws Exception  {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         Robot robot = new Robot();
-        Rectangle rectangle = new Rectangle(screenSize);
+//        Rectangle rectangle = new Rectangle(screenSize);
+        Rectangle rectangle = new Rectangle(0,0,192,540);
         ViewFrame instance = INSTANCE();
         ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
         Map<Integer, ImageData> beforeImageData = new HashMap<>(); //存放上一次的图片数据，用来和这次进行对比
         while (true){
 
-            Thread.sleep(50);
+//            Thread.sleep(50);
 
-        BufferedImage screenCapture = robot.createScreenCapture(rectangle);
+            BufferedImage screenCapture = robot.createScreenCapture(rectangle);
 
 
 //        screenCapture = screenCapture.getSubimage(0, 0, 300, 300);
-        //先把原图片缩小成原来的90%大小，质量为60%
+            //先把原图片缩小成原来的90%大小，质量为60%
 //        BufferedImage bufferedImage1 = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").asBufferedImage();
 
 //        ImageIO.write(screenCapture,"jpg",byteArrayStream);
 //        int marginLeft = (int) ((screenSize.getWidth() - screenSize.width*0.9));
-        int marginLeft = 0;
+            int marginLeft = 0;
 //        List<ImageData> imageData1 = Util.splitImage((int) (screenSize.width*0.9), (int) (screenSize.height *0.9),marginLeft, bufferedImage1);
-            Map<Integer, ImageData> imageData1 = Util.splitImageAndNum(screenSize.width, screenSize.height, marginLeft, screenCapture);
+//            Map<Integer, ImageData> imageData1 = Util.splitImageAndNum(screenSize.width, screenSize.height, marginLeft, screenCapture);
+            Map<Integer, ImageData> imageData1 = Util.splitImageAndNum(192, 540, marginLeft, screenCapture);
             //如果是第一次，就将当前的数据保存
             if(beforeImageData.size() == 0){
                 beforeImageData.putAll(imageData1);
             }
             for (int i = 0; i < imageData1.size(); i++) {
-               ImageData data = imageData1.get(i);
+                ImageData data = imageData1.get(i);
                 BufferedImage bufferedImage = data.getBufferedImage();
                 long s1 = System.currentTimeMillis();
 //                boolean b = Util.compareImageData(i, bufferedImage, beforeImageData);
@@ -134,23 +159,24 @@ public class ViewFrame {
                 BufferedImage restoreXorImageData = Util.restoreXorImageData(bufferedImage, xorImageData);
                 ImageIO.write(restoreXorImageData,"jpg",byteArrayStream);
 //            ImageIO.write(imageData1.get(0).getBufferedImage(),"jpg",byteArrayStream);
-    //        Thumbnails.of(imageData1.get(0).getBufferedImage()).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").toOutputStream(byteArrayStream);
-            String imageData = Base64.getEncoder().encodeToString(byteArrayStream.toByteArray()); ////对图片进行编码
-            System.out.println("字符个数= "+imageData.length());
-            System.out.println("压缩之后字符个数="+Util.encodeAndCompress(byteArrayStream.toByteArray()).length());
-            System.out.println("转换之后图片大小="+imageData.getBytes().length/1024);
-            System.out.println("压缩之后图片大小="+Util.encodeAndCompress(byteArrayStream.toByteArray()).getBytes().length/1024);
-            System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
+                //        Thumbnails.of(imageData1.get(0).getBufferedImage()).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").toOutputStream(byteArrayStream);
+                String imageData = Base64.getEncoder().encodeToString(byteArrayStream.toByteArray()); ////对图片进行编码
+                System.out.println("字符个数= "+imageData.length());
+                System.out.println("压缩之后字符个数="+Util.encodeAndCompress(byteArrayStream.toByteArray()).length());
+                System.out.println("转换之后图片大小="+imageData.getBytes().length/1024);
+                System.out.println("压缩之后图片大小="+Util.encodeAndCompress(byteArrayStream.toByteArray()).getBytes().length/1024);
+                System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
 //            System.out.println(imageData);
-            System.out.println("=======================");
-    //        ViewFrame instance = INSTANCE();
-    //        Graphics g = instance.jPanel.getBufferedImage().getGraphics();
+                System.out.println("=======================");
+                //        ViewFrame instance = INSTANCE();
+                //        Graphics g = instance.jPanel.getBufferedImage().getGraphics();
 
-            data.setData(Util.encodeAndCompress(byteArrayStream.toByteArray()));
-            instance.jPanel.display(data);
-            byteArrayStream.reset();
+                data.setData(Util.encodeAndCompress(byteArrayStream.toByteArray()));
+                instance.jPanel.display(data);
+//                instance.showView(data);
+                byteArrayStream.reset();
 //            g.drawImage(data.getBufferedImage(),data.getX(),data.getY(),data.getWidth(),data.getHeight(),null);
-          }
+            }
             instance.jPanel.repaint();
         }
 //        instance.showView(Util.encodeAndCompress(byteArrayStream.toByteArray()));
@@ -158,6 +184,17 @@ public class ViewFrame {
 //        Thumbnails.of(screenCapture).scale(1f).outputQuality(0.25f).outputFormat("jpg").toOutputStream(byteArrayStream);
     }
 
-
+    public static void showImage2() throws Exception{
+        ViewFrame instance = INSTANCE();
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Robot robot = new Robot();
+        while (true){
+            Thread.sleep(10);
+            Rectangle rectangle = new Rectangle(0,0,192,540);
+            BufferedImage screenCapture = robot.createScreenCapture(rectangle);
+            ImageIcon imageIcon = new ImageIcon(screenCapture);
+            instance.jLabel.setIcon(imageIcon);
+        }
+    }
 
 }
