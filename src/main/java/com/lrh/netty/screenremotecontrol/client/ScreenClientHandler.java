@@ -95,8 +95,8 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                 System.out.println("图片大小= "+screenData.getImageData().getData().length()+",大小="+screenData.getImageData().getData().getBytes().length/1024);
                 ViewFrame.INSTANCE().showView(screenData.getImageData());
             }
-            handlerMouseEvent(screenData.getMouse());
-            handlerKeyBoardEvent(screenData.getKeyBoard());
+//            handlerMouseEvent(screenData.getMouse());
+//            handlerKeyBoardEvent(screenData.getKeyBoard());
         }
     }
     /**
@@ -152,7 +152,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                             ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
                             String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
                             System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-                            ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,i);
+                            ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,i,screenSize.width,screenSize.height);
                             ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
                             ctx.writeAndFlush(sc);
                             byteArrayStream.reset();

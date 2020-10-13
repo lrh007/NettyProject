@@ -49,11 +49,21 @@ public class ImageData implements Serializable {
      * @Author lrh 2020/10/9 15:36
      */
     private int number;
+    /**   
+     * 屏幕总宽度
+     * @Author lrh 2020/10/13 15:38
+     */
+    private int screenWidth;
+    /**   
+     * 屏幕总高度
+     * @Author lrh 2020/10/13 15:38
+     */
+    private int screenHeight;
 
     public ImageData() {
     }
 
-    public ImageData(String data, boolean isEnd, int x, int y, int height, int width, BufferedImage bufferedImage,int number) {
+    public ImageData(String data, boolean isEnd, int x, int y, int height, int width, BufferedImage bufferedImage,int number,int screenWidth,int screenHeight) {
         this.data = data;
         this.isEnd = isEnd;
         this.x = x;
@@ -62,14 +72,16 @@ public class ImageData implements Serializable {
         this.width = width;
         this.bufferedImage = bufferedImage;
         this.number = number;
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
     }
 
-    public ImageData(String data, boolean isEnd, int x, int y, int height, int width,int number) {
-        this(data,isEnd,x,y,height,width,null,number);
+    public ImageData(String data, boolean isEnd, int x, int y, int height, int width,int number,int screenWidth,int screenHeight) {
+        this(data,isEnd,x,y,height,width,null,number,screenWidth,screenHeight);
     }
 
     public ImageData(String data, boolean isEnd) {
-        this(data,isEnd,0,0,0,0,0);
+        this(data,isEnd,0,0,0,0,0,0,0);
     }
 
     public String getData() {
@@ -134,5 +146,21 @@ public class ImageData implements Serializable {
 
     public void setNumber(int number) {
         this.number = number;
+    }
+
+    public int getScreenWidth() {
+        return screenWidth;
+    }
+
+    public void setScreenWidth(int screenWidth) {
+        this.screenWidth = screenWidth;
+    }
+
+    public int getScreenHeight() {
+        return screenHeight;
+    }
+
+    public void setScreenHeight(int screenHeight) {
+        this.screenHeight = screenHeight;
     }
 }

@@ -2,10 +2,13 @@ package com.lrh.netty.screenremotecontrol.client;
 
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -129,7 +132,7 @@ public class Util {
         int index = 0; //图片编号
         for (int i = 0; i < height_interval; i++) {
             for (int j = 0; j < width_interval; j++) {
-                dataMap.put(index,new ImageData(null,false,x,y,height,width,sourceBufferedImage.getSubimage(x, y, width, height),index));
+                dataMap.put(index,new ImageData(null,false,x,y,height,width,sourceBufferedImage.getSubimage(x, y, width, height),index,screenWidth,screenHeight));
                 System.out.println("分割图片位置[number="+index+",x="+x+",y="+y+",width="+width+",height="+height+"]");
                 x += width;
                 if(j+1 >= width_interval){
@@ -150,6 +153,7 @@ public class Util {
         int width = newImageData.getWidth();
         ImageData imageData = beforeData.get(imageNumber);
         BufferedImage beforeBufferedImage = imageData.getBufferedImage();
+        int interval = 6; //隔行扫描
         for (int x=0;x<width;x++){
             for (int y = 0;y<height;y++){
                 int newRGB = newImageData.getRGB(x, y);
@@ -160,6 +164,7 @@ public class Util {
                     return false;
                 }
             }
+           x += interval;
         }
         return true;
     }
@@ -216,11 +221,11 @@ public class Util {
      * 通过map的key进行排序
      * @Author lrh 2020/10/12 16:59
      */
-    public static Map<Integer, ImageData> sortMapByKey(Map<Integer, ImageData> map) {
+    public static Map<Integer, byte[]> sortMapByKey(Map<Integer, byte[]> map) {
         if (map == null || map.isEmpty()) {
             return null;
         }
-        Map<Integer, ImageData> sortMap = new TreeMap<Integer, ImageData>(
+        Map<Integer, byte[]> sortMap = new TreeMap<Integer, byte[]>(
                 new Comparator<Integer>() {
 
                     @Override
@@ -236,38 +241,91 @@ public class Util {
      * @Author lrh 2020/10/12 17:08
      * @return
      */
-    public static byte[] convertMapToBytes(Map<Integer, ImageData> map){
-        Set<Map.Entry<Integer, ImageData>> entries = map.entrySet();
+    public static byte[] convertMapToBytes(Map<Integer, byte[]> map){
+        Set<Map.Entry<Integer, byte[]>> entries = map.entrySet();
+        Collection<byte[]> values = map.values();
         int length = 0; //数组总长度
-        for (Map.Entry<Integer, ImageData> entry : entries){
-            ImageData data = entry.getValue();
-            byte[] bytes = Util.decodeUnCompress(data.getData());
-            length += bytes.length;
+        for (Map.Entry<Integer, byte[]> entry : entries){
+            byte[] data = entry.getValue();
+            length += data.length;
         }
         //通过总长度然后将数组合并到一起
         byte[] allBytes = new byte[length];
         int destPos = 0; //索引位置
-        for (Map.Entry<Integer, ImageData> entry : entries){
-            ImageData data = entry.getValue();
-            byte[] src = Util.decodeUnCompress(data.getData());
+        for (Map.Entry<Integer, byte[]> entry : entries){
+            byte[] src = entry.getValue();
             System.arraycopy(src,0,allBytes,destPos,src.length);
+            destPos += src.length;
         }
+        
+//        int i = new Random().nextInt(Integer.MAX_VALUE);
+//        try {
+//            BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(allBytes));
+//            ImageIO.write(bufferedImage,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\"+i+".jpg"));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        System.out.println("数据总子节数="+allBytes.length);
+
+
         return allBytes;
     }
-    
+    /**   
+     * 合并图片
+     * @Author lrh 2020/10/13 15:50
+     */
+    public static void mergeImage(BufferedImage globelBufferedImage,ImageData imageData){
+        Graphics g = globelBufferedImage.getGraphics(); //获取画笔
 
-
-    public static void main(String[] args) {
-        Map<Integer,ImageData> map = new HashMap<>();
-        map.put(1,null);
-        map.put(2,null);
-        map.put(7,null);
-        map.put(3,null);
-        Map<Integer, ImageData> dataMap = sortMapByKey(map);
-        System.out.println(dataMap);
-        Set<Map.Entry<Integer, ImageData>> entries = dataMap.entrySet();
-        for (Map.Entry<Integer, ImageData> imageData : entries){
-            System.out.println(imageData.getKey()+","+imageData.getValue());
+        ////获取局部图片的缓冲区
+        BufferedImage subImage = null;
+        try {
+            subImage = ImageIO.read(new ByteArrayInputStream(decodeUnCompress(imageData.getData())));
+            //使用画笔将局部图片缓冲区画到全局缓冲区上，替换原来的图片
+            g.clearRect(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
+            g.drawImage(subImage,imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight(),null);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
+    /**
+     * 待合并的两张图必须满足这样的前提，如果水平方向合并，则高度必须相等；如果是垂直方向合并，宽度必须相等。
+     * mergeImage方法不做判断，自己判断。
+     *
+     * @param img1
+     *            待合并的第一张图
+     * @param img2
+     *            带合并的第二张图
+     * @param isHorizontal
+     *            为true时表示水平方向合并，为false时表示垂直方向合并
+     * @return 返回合并后的BufferedImage对象
+     * @throws IOException
+     */
+    public static BufferedImage mergeImage(BufferedImage img1, BufferedImage img2, boolean isHorizontal,int startX, int startY)throws IOException {
+        int w1 = img1.getWidth();
+        int h1 = img1.getHeight();
+        int w2 = img2.getWidth();
+        int h2 = img2.getHeight();
+
+        // 从图片中读取RGB
+        int[] ImageArrayOne = new int[w1 * h1];
+        ImageArrayOne = img1.getRGB(0, 0, w1, h1, ImageArrayOne, 0, w1); // 逐行扫描图像中各个像素的RGB到数组中
+        int[] ImageArrayTwo = new int[w2 * h2];
+        ImageArrayTwo = img2.getRGB(0, 0, w2, h2, ImageArrayTwo, 0, w2);
+
+        // 生成新图片
+        BufferedImage DestImage = null;
+        if (isHorizontal) { // 水平方向合并
+            DestImage = new BufferedImage(w1, h1, BufferedImage.TYPE_INT_RGB);
+            DestImage.setRGB(0, 0, w1, h1, ImageArrayOne, 0, w1); // 设置上半部分或左半部分的RGB
+            DestImage.setRGB(startX,startY, w2, h2, ImageArrayTwo, 0, w2); // 设置下半部分的RGB
+        } else { // 垂直方向合并
+            DestImage = new BufferedImage(w1, h1 + h2,BufferedImage.TYPE_INT_RGB);
+            DestImage.setRGB(0, 0, w1, h1, ImageArrayOne, 0, w1); // 设置上半部分或左半部分的RGB
+            DestImage.setRGB(0, h1, w2, h2, ImageArrayTwo, 0, w2); // 设置下半部分的RGB
+        }
+        return DestImage;
+    }
+    public static void main(String[] args) {
     }
 }

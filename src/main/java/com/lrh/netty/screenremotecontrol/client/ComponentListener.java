@@ -184,4 +184,13 @@ public class ComponentListener {
             }
         }, AWTEvent.KEY_EVENT_MASK);
     }
+
+
+    /**
+     * 动态添加组件后刷新界面
+     * @Author lrh 2020/10/13 16:36
+     */
+    public static void updateUI(JFrame jFrame) {
+        SwingUtilities.updateComponentTreeUI(jFrame);//添加或删除组件后,更新窗口
+    }
 }
