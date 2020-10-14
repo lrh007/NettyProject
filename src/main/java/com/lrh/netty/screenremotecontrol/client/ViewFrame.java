@@ -83,7 +83,8 @@ public class ViewFrame {
 //        jPanel.add(jLabel);
 //        jFrame.add(jPanel);
 //        jFrame.add(jLabel);
-        jScrollPane.setPreferredSize(new Dimension(screenSize.width-100,screenSize.height-100));
+        int interval = 0;
+        jScrollPane.setPreferredSize(new Dimension(screenSize.width-interval,screenSize.height-interval));
         jScrollPane.setLayout(null);
         jPanel.add(jScrollPane);
         jFrame.add(jPanel);
