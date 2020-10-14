@@ -59,6 +59,27 @@ public class ImageData implements Serializable {
      * @Author lrh 2020/10/13 15:38
      */
     private int screenHeight;
+    /**   
+     * 裁剪后图片X坐标
+     * @Author lrh 2020/10/14 11:11
+     */
+    private int miniX;
+    /**   
+     * 裁剪后图片Y坐标
+     * @Author lrh 2020/10/14 11:11
+     */
+    private int miniY;
+    /**   
+     * 裁剪后图片的宽度
+     * @Author lrh 2020/10/14 11:12
+     */
+    private int miniWidth;
+    /**   
+     * 裁剪后图片的高度
+     * @Author lrh 2020/10/14 11:12
+     */
+    private int miniHeight;
+    
 
     public ImageData() {
     }
@@ -162,5 +183,37 @@ public class ImageData implements Serializable {
 
     public void setScreenHeight(int screenHeight) {
         this.screenHeight = screenHeight;
+    }
+
+    public int getMiniX() {
+        return miniX;
+    }
+
+    public void setMiniX(int miniX) {
+        this.miniX = miniX;
+    }
+
+    public int getMiniY() {
+        return miniY;
+    }
+
+    public void setMiniY(int miniY) {
+        this.miniY = miniY;
+    }
+
+    public int getMiniWidth() {
+        return miniWidth;
+    }
+
+    public void setMiniWidth(int miniWidth) {
+        this.miniWidth = miniWidth;
+    }
+
+    public int getMiniHeight() {
+        return miniHeight;
+    }
+
+    public void setMiniHeight(int miniHeight) {
+        this.miniHeight = miniHeight;
     }
 }

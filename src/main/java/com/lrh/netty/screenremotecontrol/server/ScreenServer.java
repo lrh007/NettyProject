@@ -1,17 +1,12 @@
 package com.lrh.netty.screenremotecontrol.server;
 
-import com.lrh.netty.screenremotecontrol.ScreenData;
-import com.lrh.netty.screenremotecontrol.client.ScreenClientHandler;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-
-import java.util.Scanner;
 
 /**
  * 服务器端

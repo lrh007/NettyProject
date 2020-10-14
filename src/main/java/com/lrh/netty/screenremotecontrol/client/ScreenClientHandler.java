@@ -149,6 +149,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
 //                            if(xorImageData == null){
 //                                continue;
 //                            }
+
                             ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
                             String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
                             System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);

@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -153,9 +154,10 @@ public class Util {
         int width = newImageData.getWidth();
         ImageData imageData = beforeData.get(imageNumber);
         BufferedImage beforeBufferedImage = imageData.getBufferedImage();
-        int interval = 6; //隔行扫描
-        for (int x=0;x<width;x++){
-            for (int y = 0;y<height;y++){
+        int intervalX = 10; //隔行扫描
+        int intervalY = 10;
+        for (int x=0;x<width;x += intervalX){
+            for (int y = 0;y<height;y += intervalY){
                 int newRGB = newImageData.getRGB(x, y);
                 int oldRGB = beforeBufferedImage.getRGB(x, y);
                 if(newRGB != oldRGB){
@@ -164,11 +166,55 @@ public class Util {
                     return false;
                 }
             }
-           x += interval;
         }
         return true;
     }
-
+    /**
+     * 比较前后两张图片之前是否相同，如果不相同则将之前的图片更新，否则不动
+     * @Author lrh 2020/10/9 11:23
+     */
+    public static boolean compareImageData2(int imageNumber,BufferedImage newBufferedImage,ImageData newImageData,Map<Integer, ImageData> beforeData){
+        int height = newBufferedImage.getHeight();
+        int width = newBufferedImage.getWidth();
+        ImageData imageData = beforeData.get(imageNumber);
+        BufferedImage beforeBufferedImage = imageData.getBufferedImage();
+        int intervalX = 10; //隔行扫描
+        int intervalY = 10;
+        //在隔行扫描的基础上判断大概图片发生变化的位置，这样发送的数据大小会减小很多，速度会快很多
+        List<Integer> list = new ArrayList<>(); //保存所有变化的行号,最后只挑选最小和最大的行号,两者相减得出变化图片的高度
+        for (int x=0;x<width;x += intervalX){
+            for (int y = 0;y<height;y += intervalY){
+                int newRGB = newBufferedImage.getRGB(x, y);
+                int oldRGB = beforeBufferedImage.getRGB(x, y);
+                if(newRGB != oldRGB){
+                    list.add(x); //记录开始变化的行数,并继续向下对比其它行
+                    break;
+                }
+            }
+        }
+        //图片一样直接返回
+        if(list.size() == 0){
+            return true;
+        }
+        System.out.println("图片前后不相同，进行替换，图片编号= "+imageNumber);
+        //对比结果进行从小到大排序
+        Collections.sort(list);
+        int minY = list.get(0); //最小X值
+        int maxY = list.get(list.size()-1); //最大X值
+        //计算高度的时候,最小值-10,最大值+10
+        minY = minY - intervalX < 0 ? 0 : minY - intervalX;
+        maxY = maxY + intervalX > imageData.getY()+height ? imageData.getY()+height : maxY + intervalX;
+        int newHeight = maxY - minY;
+        //设置裁剪后的大小
+        newImageData.setMiniX(0);
+        newImageData.setMiniY(minY);
+        newImageData.setMiniWidth(width);
+        newImageData.setMiniHeight(newHeight);
+        newImageData.setBufferedImage(newBufferedImage.getSubimage(0,minY,width,newHeight));
+//        替换原来的图片
+        imageData.setBufferedImage(newBufferedImage);
+        return false;
+    }
     /**
      * 获取图像异或操作后的结果
      * @Author lrh 2020/10/9 14:44
@@ -284,6 +330,7 @@ public class Util {
             //使用画笔将局部图片缓冲区画到全局缓冲区上，替换原来的图片
             g.clearRect(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
             g.drawImage(subImage,imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight(),null);
+            g.dispose();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -326,6 +373,17 @@ public class Util {
         }
         return DestImage;
     }
+
     public static void main(String[] args) {
+
+        List<Integer> list = new ArrayList<>();
+        for(int i=0;i<10;i++){
+            list.add(new Random().nextInt(10));
+        }
+        System.out.println("排序前: "+list);
+        Collections.sort(list);
+        System.out.println("排序后: "+list);
+        System.out.println("最小值: "+list.get(0)+",最大值: "+list.get(list.size()-1));
+
     }
 }

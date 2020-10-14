@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.awt.Frame.MAXIMIZED_BOTH;
 
@@ -27,7 +29,9 @@ import static java.awt.Frame.MAXIMIZED_BOTH;
 public class ViewFrame {
     private static ViewFrame INSTANCE;
     private JFrame jFrame = new JFrame("view");
-    private ImageJPanel jPanel = new ImageJPanel();
+    private JPanel jPanel = new JPanel();
+    // 创建滚动面板, 指定滚动显示的视图组件(textArea), 垂直滚动条一直显示, 水平滚动条从不显示
+    private JScrollPane jScrollPane = new JScrollPane();
     private JLabel jLabel = new JLabel();
     /**
      * 存放上一次的图片数据，用来和这次进行对比
@@ -39,11 +43,16 @@ public class ViewFrame {
      * @Author lrh 2020/10/13 15:42
      */
     private static BufferedImage globelBufferedImage;
-    /**   
+    /**
      * 保存所有的JLabel组件
      * @Author lrh 2020/10/13 16:44
      */
     public static ConcurrentHashMap<Integer,JLabel> allJLables = new ConcurrentHashMap<>();
+    /**
+     * 创建线程池,总共10个线程
+     * @Author lrh 2020/10/14 9:18
+     */
+    public static ExecutorService threadPool = Executors.newFixedThreadPool(20);
 
     private ViewFrame() {
         try { // 使用当前系统的界面风格
@@ -66,13 +75,19 @@ public class ViewFrame {
         jFrame.setSize(Const.VIEW_FRAME_WIDTH,Const.VIEW_FRAME_HEIGHT);
         jFrame.setExtendedState(MAXIMIZED_BOTH);//窗口启动之后最大化
 //        jLabel.setOpaque(true);
-        jFrame.setLayout(null);
+//        jFrame.setLayout(null);
 //        jLabel.setBackground(Color.BLACK); //设置背景色为黑色
-//        jPanel.setBackground(Color.BLACK);
+        jPanel.setBackground(Color.BLACK);
+        jScrollPane.setBackground(Color.BLACK);
 //        jLabel.setBounds(0,0,1920,1080);
 //        jPanel.add(jLabel);
 //        jFrame.add(jPanel);
 //        jFrame.add(jLabel);
+        jScrollPane.setPreferredSize(new Dimension(screenSize.width-100,screenSize.height-100));
+        jScrollPane.setLayout(null);
+        jPanel.add(jScrollPane);
+        jFrame.add(jPanel);
+        jFrame.setAlwaysOnTop(true); //窗口总是在最前面
         jFrame.setVisible(true);
     }
     /**   
@@ -97,7 +112,7 @@ public class ViewFrame {
      * 展示图片
      * @Author lrh 2020/9/23 15:59
      */
-    public synchronized void showView(ImageData imageData){
+    public void showView(ImageData imageData){
         //第一种方式，传输整个图片，速度慢
 //        byte[] bytes = Util.decodeUnCompress(imageData.getData());
 //        ImageIcon imageIcon = new ImageIcon(bytes);
@@ -130,39 +145,36 @@ public class ViewFrame {
 //        }
 
         //第四种方式，分块传输，动态创建JLabel，优点：是不用合并图片，缺点：需要创建多个JLabel
-//        int x=0,y=0;
-//        for(int i=0;i<2;i++){
-//            JLabel jLabel = new JLabel();
-//            jLabel.setOpaque(true);
-//            jLabel.setBackground(Color.BLACK);
-//            jLabel.setBounds(x,y,200,20);
-//            jFrame.add(jLabel);
-//            allJLables.put(i,jLabel);
-//            x += 100;
-//            y += 100;
-//            ComponentListener.updateUI(jFrame);
-//        }
         if(allJLables.get(imageData.getNumber()) != null){
-            new Thread(new Runnable() {
+            threadPool.execute(new Runnable() {
                 @Override
                 public void run() {
                     JLabel jLabel = allJLables.get(imageData.getNumber());
                     byte[] bytes = Util.decodeUnCompress(imageData.getData());
                     ImageIcon imageIcon = new ImageIcon(bytes);
+//                    int width = imageData.getWidth() - 50;
+//                    int height = imageData.getHeight()- 50;
+//                    //设置图片缩小
+//                    Image image = imageIcon.getImage();
+//                    image = image.getScaledInstance(width,height,Image.SCALE_DEFAULT);
+//                    imageIcon.setImage(image);
                     jLabel.setIcon(imageIcon);
                 }
-            }).start();
-
+            });
         }else{
-            JLabel jLabel = new JLabel();
-            jLabel.setOpaque(true);
-            jLabel.setBackground(Color.BLACK);
-            jLabel.setBounds(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
-            jFrame.add(jLabel);
-            allJLables.put(imageData.getNumber(),jLabel);
-            ComponentListener.updateUI(jFrame);
+            threadPool.execute(new Runnable() {
+                @Override
+                public void run() {
+                    JLabel jLabel = new JLabel();
+                    jLabel.setOpaque(true);
+                    jLabel.setBackground(Color.black);
+                    jLabel.setBounds(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
+                    jScrollPane.add(jLabel);
+                    allJLables.put(imageData.getNumber(),jLabel);
+                    ComponentListener.updateUI(jScrollPane);
+                }
+            });
         }
-
     }
 
     /**
@@ -238,12 +250,10 @@ public class ViewFrame {
                 //        Graphics g = instance.jPanel.getBufferedImage().getGraphics();
 
                 data.setData(Util.encodeAndCompress(byteArrayStream.toByteArray()));
-                instance.jPanel.display(data);
-//                instance.showView(data);
+                instance.showView(data);
                 byteArrayStream.reset();
 //            g.drawImage(data.getBufferedImage(),data.getX(),data.getY(),data.getWidth(),data.getHeight(),null);
             }
-            instance.jPanel.repaint();
         }
 //        instance.showView(Util.encodeAndCompress(byteArrayStream.toByteArray()));
 //        INSTANCE();
@@ -257,12 +267,25 @@ public class ViewFrame {
         Rectangle rectangle = new Rectangle(screenSize);
         ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
         Robot robot = new Robot();
+        Map<Integer, ImageData> beforeImageData = new HashMap<>(); //存放上一次的图片数据，用来和这次进行对比
         while (true){
 //            Thread.sleep(10);
             BufferedImage screenCapture = robot.createScreenCapture(rectangle);
             Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0, screenCapture);
+            //如果是第一次，就将当前的数据保存
+            if(beforeImageData.size() == 0){
+                beforeImageData.putAll(imageDatas);
+            }
             for (int i=0;i<imageDatas.size();i++){
+
                 ImageData data = imageDatas.get(i);
+                long s1 = System.currentTimeMillis();
+//                boolean b = Util.compareImageData2(i, data.getBufferedImage(),data, beforeImageData);
+                boolean b = Util.compareImageData(i, data.getBufferedImage(), beforeImageData);
+                System.out.println("图片是否相同= "+b+",耗时="+(System.currentTimeMillis()-s1));
+                if(b){
+                    continue;
+                }
                 ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
                 String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
                 System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
@@ -280,55 +303,5 @@ public class ViewFrame {
 
         }
     }
-    /**   
-     * 多线程方式
-     * @Author lrh 2020/10/13 17:15
-     */
-    public static void showImage3() throws Exception{
-        ViewFrame instance = INSTANCE();
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        Rectangle rectangle = new Rectangle(screenSize);
-        Robot robot = new Robot();
-        BufferedImage screenCapture = robot.createScreenCapture(rectangle);
-        Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0, screenCapture);
-        new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        sendMessage(instance,imageDatas.get(0),screenCapture.getWidth(),screenCapture.getHeight());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
-//        for(Map.Entry<Integer, ImageData> entry :  imageDatas.entrySet()){
-//
-//            new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    try {
-//                        sendMessage(instance,entry.getValue(),screenCapture.getWidth(),screenCapture.getHeight());
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }).start();
-//        }
-    }
 
-    private static void sendMessage(ViewFrame instance,ImageData imageData,int screenWitdh,int screenHeight) throws Exception {
-        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-        Rectangle rectangle = new Rectangle(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
-        Robot robot = new Robot();
-        while (true){
-            Thread.sleep(10);
-            BufferedImage screenCapture = robot.createScreenCapture(rectangle);
-            ImageIO.write(screenCapture,"jpg",byteArrayStream);
-            String data = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
-            System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-            ImageData dataImage = new ImageData(data,false,imageData.getX(),imageData.getY(),imageData.getHeight(),imageData.getWidth(),null,0,screenWitdh,screenHeight);
-            instance.showView(dataImage);
-            byteArrayStream.reset();
-        }
-    }
 }
