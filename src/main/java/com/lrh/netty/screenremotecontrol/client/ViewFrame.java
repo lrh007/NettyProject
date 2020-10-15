@@ -12,7 +12,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,15 +76,9 @@ public class ViewFrame {
         jFrame.setLocation((int)screenSize.getWidth()/2- Const.VIEW_FRAME_WIDTH/2,(int)screenSize.getHeight()/2-Const.VIEW_FRAME_HEIGHT/2);
         jFrame.setSize(Const.VIEW_FRAME_WIDTH,Const.VIEW_FRAME_HEIGHT);
         jFrame.setExtendedState(MAXIMIZED_BOTH);//窗口启动之后最大化
-//        jLabel.setOpaque(true);
 //        jFrame.setLayout(null);
-//        jLabel.setBackground(Color.BLACK); //设置背景色为黑色
-        jPanel.setBackground(Color.BLACK);
+//        jPanel.setBackground(Color.BLACK);
         jScrollPane.setBackground(Color.BLACK);
-//        jLabel.setBounds(0,0,1920,1080);
-//        jPanel.add(jLabel);
-//        jFrame.add(jPanel);
-//        jFrame.add(jLabel);
         int interval = 0;
         jScrollPane.setPreferredSize(new Dimension(screenSize.width-interval,screenSize.height-interval));
         jScrollPane.setLayout(null);
@@ -147,34 +143,25 @@ public class ViewFrame {
 
         //第四种方式，分块传输，动态创建JLabel，优点：是不用合并图片，缺点：需要创建多个JLabel
         if(allJLables.get(imageData.getNumber()) != null){
-            threadPool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    JLabel jLabel = allJLables.get(imageData.getNumber());
-                    byte[] bytes = Util.decodeUnCompress(imageData.getData());
-                    ImageIcon imageIcon = new ImageIcon(bytes);
+            JLabel jLabel = allJLables.get(imageData.getNumber());
+            byte[] bytes = Util.decodeUnCompress(imageData.getData());
+            ImageIcon imageIcon = new ImageIcon(bytes);
 //                    int width = imageData.getWidth() - 50;
 //                    int height = imageData.getHeight()- 50;
 //                    //设置图片缩小
 //                    Image image = imageIcon.getImage();
 //                    image = image.getScaledInstance(width,height,Image.SCALE_DEFAULT);
 //                    imageIcon.setImage(image);
-                    jLabel.setIcon(imageIcon);
-                }
-            });
+            jLabel.setIcon(imageIcon);
         }else{
-            threadPool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    JLabel jLabel = new JLabel();
-                    jLabel.setOpaque(true);
-                    jLabel.setBackground(Color.black);
-                    jLabel.setBounds(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
-                    jScrollPane.add(jLabel);
-                    allJLables.put(imageData.getNumber(),jLabel);
-                    ComponentListener.updateUI(jScrollPane);
-                }
-            });
+            JLabel jLabel = new JLabel();
+            jLabel.setOpaque(true);
+            jLabel.setBackground(Color.black);
+            jLabel.setBounds(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
+            jScrollPane.add(jLabel);
+            allJLables.put(imageData.getNumber(),jLabel);
+            System.out.println("allJLables="+allJLables.size());
+            ComponentListener.updateUI(jScrollPane);
         }
     }
 
@@ -191,8 +178,8 @@ public class ViewFrame {
 
     public static void main(String[] args) throws Exception {
 //        showImage1();
-        showImage2();
-//        showImage3();
+//        showImage2();
+        showImage3();
     }
 
 
@@ -230,7 +217,7 @@ public class ViewFrame {
                 BufferedImage bufferedImage = data.getBufferedImage();
                 long s1 = System.currentTimeMillis();
 //                boolean b = Util.compareImageData(i, bufferedImage, beforeImageData);
-                BufferedImage xorImageData = Util.getXorImageData(i, bufferedImage, beforeImageData);
+                BufferedImage xorImageData = Util.getXorImageData(i, bufferedImage, beforeImageData.get(data.getNumber()).getBufferedImage());
                 System.out.println("图片是否相同= "+xorImageData+",耗时="+(System.currentTimeMillis()-s1));
                 if(xorImageData == null){
                     continue;
@@ -278,10 +265,9 @@ public class ViewFrame {
                 beforeImageData.putAll(imageDatas);
             }
             for (int i=0;i<imageDatas.size();i++){
-
                 ImageData data = imageDatas.get(i);
                 long s1 = System.currentTimeMillis();
-//                boolean b = Util.compareImageData2(i, data.getBufferedImage(),data, beforeImageData);
+                BufferedImage beforeBufferedImage = beforeImageData.get(data.getNumber()).getBufferedImage();
                 boolean b = Util.compareImageData(i, data.getBufferedImage(), beforeImageData);
                 System.out.println("图片是否相同= "+b+",耗时="+(System.currentTimeMillis()-s1));
                 if(b){
@@ -305,4 +291,58 @@ public class ViewFrame {
         }
     }
 
+
+    public static void showImage3() throws Exception{
+        ViewFrame instance = INSTANCE();
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+        Rectangle rectangle = new Rectangle(screenSize);
+
+        Robot robot = new Robot();
+        ConcurrentHashMap<Integer, ImageData> beforeImageData = new ConcurrentHashMap<>(); //存放上一次的图片数据，用来和这次进行对比
+
+        while (true){
+//            Thread.sleep(100);
+            BufferedImage screenCapture = robot.createScreenCapture(rectangle);
+            Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0,screenCapture);
+            for (int i=0;i<imageDatas.size();i++){
+                final ImageData data = imageDatas.get(i);
+                //如果是第一次，就将当前的数据保存
+                if(beforeImageData.get(data.getNumber()) == null){
+                    beforeImageData.put(data.getNumber(),data);
+                }
+                final int j = i;
+                threadPool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+//                        Rectangle rectangle = new Rectangle(data.getX(),data.getY(),data.getWidth(),data.getHeight());
+                        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+
+                        long s1 = System.currentTimeMillis();
+                        BufferedImage beforeBufferedImage = beforeImageData.get(data.getNumber()).getBufferedImage();
+                        boolean b = Util.compareImageData(j, data.getBufferedImage(), beforeImageData);
+                        System.out.println("图片是否相同= "+b+",耗时="+(System.currentTimeMillis()-s1));
+                        if(!b){
+                            try {
+                                ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
+                            System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
+                            ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
+                            instance.showView(dataImage);
+                        }
+                        byteArrayStream.reset();
+                        byteArrayStream = null;
+
+                    }
+                });
+
+            }
+
+
+
+        }
+    }
 }

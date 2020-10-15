@@ -190,7 +190,7 @@ public class ComponentListener {
      * 动态添加组件后刷新界面
      * @Author lrh 2020/10/13 16:36
      */
-    public static void updateUI(Component component) {
+    public static void updateUI(JScrollPane component) {
         SwingUtilities.updateComponentTreeUI(component);//添加或删除组件后,更新窗口
     }
 }

@@ -1,6 +1,11 @@
 package com.lrh.netty.screenremotecontrol.client;
 
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
+import com.sun.image.codec.jpeg.JPEGCodec;
+import com.sun.image.codec.jpeg.JPEGEncodeParam;
+import com.sun.image.codec.jpeg.JPEGImageDecoder;
+import com.sun.image.codec.jpeg.JPEGImageEncoder;
+import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -145,11 +150,41 @@ public class Util {
         }
         return dataMap;
     }
+
+    /**
+     * 分割图片并给图片进行编号
+     * @Author lrh 2020/9/28 12:15
+     */
+    public static Map<Integer,ImageData> splitImageAndNum(int screenWidth, int screenHeight, int marginLeft){
+        Map<Integer,ImageData> dataMap = new HashMap<>();
+        int width_interval = 10; //宽度分成10份
+        int height_interval = 2; //高度分成2份
+        int width = screenWidth / width_interval;  //图片宽度
+        int height = screenHeight / height_interval; //图片高度
+        int x = marginLeft; //图片x坐标
+        int y = 0; //图片y坐标
+        //分割图片
+        BufferedImage newBufferedImage = null;
+        int index = 0; //图片编号
+        for (int i = 0; i < height_interval; i++) {
+            for (int j = 0; j < width_interval; j++) {
+                dataMap.put(index,new ImageData(null,false,x,y,height,width,null,index,screenWidth,screenHeight));
+                System.out.println("分割图片位置[number="+index+",x="+x+",y="+y+",width="+width+",height="+height+"]");
+                x += width;
+                if(j+1 >= width_interval){
+                    x = marginLeft;
+                }
+                index ++;
+            }
+            y+= height;
+        }
+        return dataMap;
+    }
     /**
      * 比较前后两张图片之前是否相同，如果不相同则将之前的图片更新，否则不动
      * @Author lrh 2020/10/9 11:23
      */
-    public static boolean compareImageData(int imageNumber,BufferedImage newImageData,Map<Integer, ImageData> beforeData){
+    public synchronized static boolean compareImageData(int imageNumber,BufferedImage newImageData,Map<Integer, ImageData> beforeData){
         int height = newImageData.getHeight();
         int width = newImageData.getWidth();
         ImageData imageData = beforeData.get(imageNumber);
@@ -219,27 +254,22 @@ public class Util {
      * 获取图像异或操作后的结果
      * @Author lrh 2020/10/9 14:44
      */
-    public static BufferedImage getXorImageData(int imageNumber,BufferedImage newImageData,Map<Integer, ImageData> beforeData){
-        BufferedImage beforeBufferedImage = beforeData.get(imageNumber).getBufferedImage();
-        boolean b = compareImageData(imageNumber, newImageData, beforeData);
-        if(!b){ //图像不相同，对像素进行异或操作
-            ColorModel cm = newImageData.getColorModel();
-            BufferedImage image = new BufferedImage(cm,
-                    cm.createCompatibleWritableRaster(newImageData.getWidth(), newImageData.getHeight()),
-                    cm.isAlphaPremultiplied(),
-                    null);
-            int height = newImageData.getHeight();
-            int width = newImageData.getWidth();
-            for (int x=0;x<width;x++){
-                for (int y = 0;y<height;y++){
-                    int newRGB = newImageData.getRGB(x, y);
-                    int oldRGB = beforeBufferedImage.getRGB(x, y);
-                    image.setRGB(x,y,newRGB ^ oldRGB);
-                }
+    public static BufferedImage getXorImageData(int imageNumber,BufferedImage newImageData,BufferedImage beforeBufferedImage){
+        ColorModel cm = newImageData.getColorModel();
+        BufferedImage image = new BufferedImage(cm,
+                cm.createCompatibleWritableRaster(newImageData.getWidth(), newImageData.getHeight()),
+                cm.isAlphaPremultiplied(),
+                null);
+        int height = newImageData.getHeight();
+        int width = newImageData.getWidth();
+        for (int x=0;x<width;x++){
+            for (int y = 0;y<height;y++){
+                int newRGB = newImageData.getRGB(x, y);
+                int oldRGB = beforeBufferedImage.getRGB(x, y);
+                image.setRGB(x,y,newRGB ^ oldRGB);
             }
-            return image;
         }
-        return null;
+        return image;
     }
     /**   
      * 异或还原图片数据
@@ -374,16 +404,118 @@ public class Util {
         return DestImage;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
-        List<Integer> list = new ArrayList<>();
-        for(int i=0;i<10;i++){
-            list.add(new Random().nextInt(10));
+
+        File in_file = new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg");
+        BufferedImage bufferedImage = ImageIO.read(in_file);
+       /* ByteArrayOutputStream out = new ByteArrayOutputStream();
+        //压缩
+        JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
+        JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(bufferedImage);
+        param.setQuality(0.1f, false);
+        encoder.setJPEGEncodeParam(param);
+        encoder.encode(bufferedImage);
+        System.out.println("压缩之后大小="+out.toByteArray().length/1024);
+
+        //解压缩
+        byte[] buf = out.toByteArray();
+        ByteArrayInputStream in = new ByteArrayInputStream(buf);
+        JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
+        BufferedImage image = decoder.decodeAsBufferedImage();
+        ImageIO.write(image,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.jpg"));
+*/
+
+        //先把原图片缩小成原来的90%大小，质量为60%
+//        BufferedImage bufferedImage1 = Thumbnails.of(bufferedImage).scale(0.1f).outputQuality(1f).outputFormat("jpg").asBufferedImage();
+//        ImageIO.write(bufferedImage1,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.jpg"));
+
+        // 字符串超过一定的长度
+        String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
+                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
+                "aLUIGOM1TCW6ZogcEZEc52DuocUEID9+LJHFdT8wN8A2IKEuZZv1vFiNgmvG5vbo4xoulzh1c5kJ\n" +
+                "ZxVOg+q5yPb6eCth6viCoeuGWp2gmktKww/zVmi1ts5EvmD5TGo3qOpmPudzFC7sR9fTZUa3HEEy\n" +
+                "bSVFoh3sWxZS+KwV";
+        System.out.println("\n原始的字符串为------->" + str);
+        float len0=str.length();
+        System.out.println("原始的字符串长度为------->"+len0);
+
+        List<Integer> list = LZWcompress(str);
+        float len1=list.size();
+        System.out.println("压缩后的字符串长度为----->" + len1);
+
+        String jy = LZWdecompress(list);
+        System.out.println("\n解压缩后的字符串为--->" + jy);
+        System.out.println("解压缩后的字符串长度为--->"+jy.length());
+
+
+        //判断
+        if(str.equals(jy)){
+            System.out.println("先压缩再解压以后字符串和原来的是一模一样的");
         }
-        System.out.println("排序前: "+list);
-        Collections.sort(list);
-        System.out.println("排序后: "+list);
-        System.out.println("最小值: "+list.get(0)+",最大值: "+list.get(list.size()-1));
+
+        String s = Arrays.asList(list).toString();
+
+        System.out.println(s.replaceAll("\\[\\[|\\]\\]",""));
 
     }
+
+    /** Compress a string to a list of output symbols. */
+    public static List<Integer> LZWcompress(String uncompressed) {
+        // Build the dictionary.
+        int dictSize = 256;
+        Map<String,Integer> dictionary = new HashMap<String,Integer>();
+        for (int i = 0; i < 256; i++)
+            dictionary.put("" + (char)i, i);
+
+        String w = "";
+        List<Integer> result = new ArrayList<Integer>();
+        for (char c : uncompressed.toCharArray()) {
+            String wc = w + c;
+            if (dictionary.containsKey(wc))
+                w = wc;
+            else {
+                result.add(dictionary.get(w));
+                // Add wc to the dictionary.
+                dictionary.put(wc, dictSize++);
+                w = "" + c;
+            }
+        }
+
+        // Output the code for w.
+        if (!w.equals(""))
+            result.add(dictionary.get(w));
+        return result;
+    }
+
+    /** Decompress a list of output ks to a string. */
+    public static String LZWdecompress(List<Integer> compressed) {
+        // Build the dictionary.
+        int dictSize = 256;
+        Map<Integer,String> dictionary = new HashMap<Integer,String>();
+        for (int i = 0; i < 256; i++)
+            dictionary.put(i, "" + (char)i);
+
+        String w = "" + (char)(int)compressed.remove(0);
+        StringBuffer result = new StringBuffer(w);
+        for (int k : compressed) {
+            String entry;
+            if (dictionary.containsKey(k))
+                entry = dictionary.get(k);
+            else if (k == dictSize)
+                entry = w + w.charAt(0);
+            else
+                throw new IllegalArgumentException("Bad compressed k: " + k);
+
+            result.append(entry);
+
+            // Add w+entry[0] to the dictionary.
+            dictionary.put(dictSize++, w + entry.charAt(0));
+
+            w = entry;
+        }
+        return result.toString();
+    }
+
+
 }
