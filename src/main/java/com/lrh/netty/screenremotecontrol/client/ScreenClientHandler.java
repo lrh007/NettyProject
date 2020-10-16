@@ -17,9 +17,11 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.awt.Frame.ICONIFIED;
 
@@ -37,7 +39,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
      * 存放上一次的图片数据，用来和这次进行对比
      * @Author lrh 2020/10/9 15:11
      */
-    private static Map<Integer, ImageData> beforeImageData = new HashMap<>();
+    private static ConcurrentHashMap<Integer, ImageData> beforeImageData = new ConcurrentHashMap<>();
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ScreenData screenData) throws Exception {
@@ -114,9 +116,8 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
         Robot finalRobot = robot;
         Rectangle rectangle = new Rectangle(screenSize);
         ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-
         System.out.println("发送数据,连接关闭="+Const.CONNECT_CLOSE);
-        new Thread(new Runnable() {
+        ViewFrame.threadPool.execute(new Runnable() {
             @Override
             public void run() {
                 boolean first = false;
@@ -133,29 +134,33 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                         //如果是第一次，就将当前的数据保存
                         if(beforeImageData.size() == 0){
                             beforeImageData.putAll(imageDatas);
-                            first = true;
+                            //第一次将图片全部发送给对方，保证能正常显示
+                            for (int i=0;i<imageDatas.size();i++){
+                                ImageData data = imageDatas.get(i);
+                                ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
+                                String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
+                                System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
+                                ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,data.getNumber(),screenSize.width,screenSize.height);
+                                ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
+                                ctx.writeAndFlush(sc);
+                                byteArrayStream.reset();
+                            }
                         }
                         for (int i=0;i<imageDatas.size();i++){
                             ImageData data = imageDatas.get(i);
-                            //第一次的时候先发送全部的图片过去，保证对方能完全展示出来所有图像
-                            if(!first){
-                                boolean b = Util.compareImageData(i, data.getBufferedImage(), beforeImageData);
-                                if(b){
-                                    continue;
+                            boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeImageData);
+                            if(!b){
+                                try {
+                                    ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
+                                String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
+                                System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
+                                ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,data.getNumber(),screenSize.width,screenSize.height);
+                                ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
+                                ctx.writeAndFlush(sc);
                             }
-                            first = false;
-//                            BufferedImage xorImageData = Util.getXorImageData(i,  data.getBufferedImage(), beforeImageData);
-//                            if(xorImageData == null){
-//                                continue;
-//                            }
-
-                            ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
-                            String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
-                            System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-                            ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,i,screenSize.width,screenSize.height);
-                            ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
-                            ctx.writeAndFlush(sc);
                             byteArrayStream.reset();
                         }
                         Thread.sleep(Const.SEND_DATA_INTERVAL);
@@ -166,7 +171,7 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                 //将标识复位
                 Const.CONNECT_CLOSE = false;
             }
-        }).start();
+        });
     }
 
     /**

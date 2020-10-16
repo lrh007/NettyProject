@@ -2,6 +2,7 @@ package com.lrh.netty.screenremotecontrol.client.bean;
 
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 图片实体类
@@ -79,7 +80,7 @@ public class ImageData implements Serializable {
      * @Author lrh 2020/10/14 11:12
      */
     private int miniHeight;
-    
+
 
     public ImageData() {
     }

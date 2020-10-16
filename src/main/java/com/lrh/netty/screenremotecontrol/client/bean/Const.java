@@ -106,7 +106,7 @@ public class Const {
      * 发送数据的间隔，单位毫秒
      * @Author lrh 2020/9/24 14:36
      */
-    public static final int SEND_DATA_INTERVAL = 50;
+    public static final int SEND_DATA_INTERVAL = 40;
 
     /**   
      * 鼠标拖拽事件

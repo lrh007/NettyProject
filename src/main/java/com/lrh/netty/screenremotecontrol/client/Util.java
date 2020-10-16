@@ -409,11 +409,11 @@ public class Util {
 
         File in_file = new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg");
         BufferedImage bufferedImage = ImageIO.read(in_file);
-       /* ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
         //压缩
         JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
         JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(bufferedImage);
-        param.setQuality(0.1f, false);
+        param.setQuality(0.35f, false);
         encoder.setJPEGEncodeParam(param);
         encoder.encode(bufferedImage);
         System.out.println("压缩之后大小="+out.toByteArray().length/1024);
@@ -424,14 +424,13 @@ public class Util {
         JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
         BufferedImage image = decoder.decodeAsBufferedImage();
         ImageIO.write(image,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.jpg"));
-*/
 
         //先把原图片缩小成原来的90%大小，质量为60%
 //        BufferedImage bufferedImage1 = Thumbnails.of(bufferedImage).scale(0.1f).outputQuality(1f).outputFormat("jpg").asBufferedImage();
 //        ImageIO.write(bufferedImage1,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.jpg"));
 
         // 字符串超过一定的长度
-        String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
+        /*String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
                 "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
                 "aLUIGOM1TCW6ZogcEZEc52DuocUEID9+LJHFdT8wN8A2IKEuZZv1vFiNgmvG5vbo4xoulzh1c5kJ\n" +
                 "ZxVOg+q5yPb6eCth6viCoeuGWp2gmktKww/zVmi1ts5EvmD5TGo3qOpmPudzFC7sR9fTZUa3HEEy\n" +
@@ -439,24 +438,18 @@ public class Util {
         System.out.println("\n原始的字符串为------->" + str);
         float len0=str.length();
         System.out.println("原始的字符串长度为------->"+len0);
-
         List<Integer> list = LZWcompress(str);
         float len1=list.size();
         System.out.println("压缩后的字符串长度为----->" + len1);
-
         String jy = LZWdecompress(list);
         System.out.println("\n解压缩后的字符串为--->" + jy);
         System.out.println("解压缩后的字符串长度为--->"+jy.length());
-
-
         //判断
         if(str.equals(jy)){
             System.out.println("先压缩再解压以后字符串和原来的是一模一样的");
         }
-
         String s = Arrays.asList(list).toString();
-
-        System.out.println(s.replaceAll("\\[\\[|\\]\\]",""));
+        System.out.println(s.replaceAll("\\[\\[|\\]\\]",""));*/
 
     }
 
@@ -517,5 +510,47 @@ public class Util {
         return result.toString();
     }
 
+    /**
+     * 对图像进行压缩
+     * @param image 图像
+     * @return 图像数据包装类
+     * @throws ImageFormatException
+     * @throws IOException
+     * @throws IOException
+     */
+    public static byte[] encodeImage(BufferedImage image){
 
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
+        JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(image);
+        param.setQuality(0.5f, false);
+        encoder.setJPEGEncodeParam(param);
+        try {
+            encoder.encode(image);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return out.toByteArray();
+
+    }
+
+    /**对图像进行解压缩
+     * @param ito 图像数据包装类
+     * @return BufferedImage 图像
+     * @throws ImageFormatException
+     * @throws IOException
+     * @throws IOException
+     */
+
+    public static BufferedImage decodeImage(byte[] buf){
+        ByteArrayInputStream in = new ByteArrayInputStream(buf);
+        JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
+        BufferedImage image = null;
+        try {
+            image = decoder.decodeAsBufferedImage();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return image;
+    }
 }

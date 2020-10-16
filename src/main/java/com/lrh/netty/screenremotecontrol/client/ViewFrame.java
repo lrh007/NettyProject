@@ -17,9 +17,7 @@ import java.io.IOException;
 import java.nio.Buffer;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 import static java.awt.Frame.MAXIMIZED_BOTH;
 
@@ -34,17 +32,6 @@ public class ViewFrame {
     private JPanel jPanel = new JPanel();
     // 创建滚动面板, 指定滚动显示的视图组件(textArea), 垂直滚动条一直显示, 水平滚动条从不显示
     private JScrollPane jScrollPane = new JScrollPane();
-    private JLabel jLabel = new JLabel();
-    /**
-     * 存放上一次的图片数据，用来和这次进行对比
-     * @Author lrh 2020/10/9 15:11
-     */
-    private static Map<Integer, byte[]> beforeImageData = new HashMap<>();
-    /**   
-     * 保存一个完整的画布
-     * @Author lrh 2020/10/13 15:42
-     */
-    private static BufferedImage globelBufferedImage;
     /**
      * 保存所有的JLabel组件
      * @Author lrh 2020/10/13 16:44
@@ -55,6 +42,12 @@ public class ViewFrame {
      * @Author lrh 2020/10/14 9:18
      */
     public static ExecutorService threadPool = Executors.newFixedThreadPool(20);
+    /**   
+     * 设置队列，最大容量为1000，超过这个容量就等待
+     * @Author lrh 2020/10/16 10:45
+     */
+    public static BlockingQueue<ImageData> blockingQueue = new LinkedBlockingQueue<>(100);
+
 
     private ViewFrame() {
         try { // 使用当前系统的界面风格
@@ -171,7 +164,7 @@ public class ViewFrame {
      */
     private void addListener(){
         ComponentListener.closeViewFrameListener(jFrame,MainFrame.friendName);
-        ComponentListener.viewFrameMouseListener(jLabel,MainFrame.friendName);
+//        ComponentListener.viewFrameMouseListener(jLabel,MainFrame.friendName);
         ComponentListener.viewFrameKeyBoardListener(MainFrame.friendName);
 
     }
@@ -180,6 +173,7 @@ public class ViewFrame {
 //        showImage1();
 //        showImage2();
         showImage3();
+//        showImage4();
     }
 
 
@@ -300,9 +294,8 @@ public class ViewFrame {
 
         Robot robot = new Robot();
         ConcurrentHashMap<Integer, ImageData> beforeImageData = new ConcurrentHashMap<>(); //存放上一次的图片数据，用来和这次进行对比
-
         while (true){
-//            Thread.sleep(100);
+            Thread.sleep(30);
             BufferedImage screenCapture = robot.createScreenCapture(rectangle);
             Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0,screenCapture);
             for (int i=0;i<imageDatas.size();i++){
@@ -328,7 +321,8 @@ public class ViewFrame {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
+                            byte[] bytes = Util.encodeImage(data.getBufferedImage());
+                            String imageData = Util.encodeAndCompress(bytes); ////对图片进行编码
                             System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
                             ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
                             instance.showView(dataImage);
@@ -340,9 +334,86 @@ public class ViewFrame {
                 });
 
             }
-
-
-
         }
+    }
+
+
+    public static void showImage4() throws Exception{
+        ViewFrame instance = INSTANCE();
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+        Rectangle rectangle = new Rectangle(screenSize);
+
+        Robot robot = new Robot();
+        ConcurrentHashMap<Integer, ImageData> beforeImageData = new ConcurrentHashMap<>(); //存放上一次的图片数据，用来和这次进行对比
+
+        //截图放到一个单独的线程中，通过阻塞队列通信
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true){
+//                    try {
+//                        Thread.sleep(20);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+
+//                    Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0,screenCapture);
+
+                    Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0);
+                    for (int i = 0; i < imageDatas.size(); i++) {
+                        ImageData data = imageDatas.get(i);
+                        threadPool.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+                                Rectangle rectangle = new Rectangle(data.getX(),data.getY(),data.getWidth(),data.getHeight());
+                                BufferedImage screenCapture = robot.createScreenCapture(rectangle);
+                                data.setBufferedImage(screenCapture);
+                                //如果是第一次，就将当前的数据保存
+                                if (beforeImageData.get(data.getNumber()) == null) {
+                                    beforeImageData.put(data.getNumber(), data);
+                                }
+                                boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeImageData);
+                                if(!b){
+                                    try {
+                                        ImageIO.write(data.getBufferedImage(), "jpg", byteArrayStream);
+                                        String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
+                                        System.out.println("发送之前图片大小=" + byteArrayStream.toByteArray().length / 1024);
+                                        ImageData dataImage = new ImageData(imageData, false, data.getX(), data.getY(), data.getHeight(), data.getWidth(), null, data.getNumber(), screenSize.width, screenSize.height);
+                                        blockingQueue.put(dataImage);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                            }
+                        });
+                    }
+
+
+                }
+            }
+        });
+
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    ImageData data = null;
+                    try {
+                        data = blockingQueue.take();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    if(data == null){
+                        continue;
+                    }
+                    instance.showView(data);
+                }
+            }
+        });
+
+
     }
 }
