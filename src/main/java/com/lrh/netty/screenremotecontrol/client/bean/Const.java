@@ -106,7 +106,7 @@ public class Const {
      * 发送数据的间隔，单位毫秒
      * @Author lrh 2020/9/24 14:36
      */
-    public static final int SEND_DATA_INTERVAL = 40;
+    public static final int SEND_DATA_INTERVAL = 30;
 
     /**   
      * 鼠标拖拽事件
@@ -154,5 +154,10 @@ public class Const {
      * @Author lrh 2020/9/24 14:48
      */
     public static String keyBoardAction;
+    /**   
+     * 缩放比例
+     * @Author lrh 2020/10/19 18:03
+     */
+    public static final double scale = 0.9;
 
 }

@@ -125,12 +125,11 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                     try {
                         System.out.println("发送数据,CONNECT_CLOSE="+Const.CONNECT_CLOSE);
                         BufferedImage screenCapture = finalRobot.createScreenCapture(rectangle);
-//                        ImageIO.write(screenCapture,"jpg",byteArrayStream);
-//                        Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").toOutputStream(byteArrayStream);
-//                        BufferedImage bufferedImage = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(0.6f).outputFormat("jpg").asBufferedImage();
+                        //先把原图片缩小成原来的90%大小，质量为60%
+                        screenCapture = Thumbnails.of(screenCapture).scale(Const.scale).outputQuality(1f).outputFormat("jpg").asBufferedImage();
                         //分割图片
 //                        List<ImageData> imageDatas = Util.splitImage((int) (screenSize.width*0.9), (int) (screenSize.height *0.9),0, bufferedImage);
-                        Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0, screenCapture);
+                        Map<Integer, ImageData> imageDatas = Util.splitImageAndNum((int)(screenSize.width*Const.scale), (int)(screenSize.height*Const.scale), 0, screenCapture);
                         //如果是第一次，就将当前的数据保存
                         if(beforeImageData.size() == 0){
                             beforeImageData.putAll(imageDatas);
@@ -148,20 +147,20 @@ public class ScreenClientHandler extends SimpleChannelInboundHandler<ScreenData>
                         }
                         for (int i=0;i<imageDatas.size();i++){
                             ImageData data = imageDatas.get(i);
-                            boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeImageData);
+                            //用来保存之前的数据进行异或操作
+                            BufferedImage beforeBufferedImage = beforeImageData.get(data.getNumber()).getBufferedImage();
+                            boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
                             if(!b){
-                                try {
-                                    ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
-                                System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
+                                //将原来的图片替换保存
+                                beforeImageData.get(data.getNumber()).setBufferedImage(data.getBufferedImage());
+                                byte[] bytes = Util.encodeImage(data.getBufferedImage());
+                                String imageData = Util.encodeAndCompress(bytes); ////对图片进行编码
+                                System.out.println("发送之前图片大小="+bytes.length/1024);
                                 ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,data.getNumber(),screenSize.width,screenSize.height);
                                 ScreenData sc = new ScreenData(screenData.getReceiveName(),screenData.getSendName(),Const.STATUS_AGREE,dataImage);
                                 ctx.writeAndFlush(sc);
+                                data = null;
                             }
-                            byteArrayStream.reset();
                         }
                         Thread.sleep(Const.SEND_DATA_INTERVAL);
                     } catch (Exception e) {

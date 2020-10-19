@@ -41,7 +41,7 @@ public class ViewFrame {
      * 创建线程池,总共10个线程
      * @Author lrh 2020/10/14 9:18
      */
-    public static ExecutorService threadPool = Executors.newFixedThreadPool(20);
+    public static ExecutorService threadPool = Executors.newFixedThreadPool(30);
     /**   
      * 设置队列，最大容量为1000，超过这个容量就等待
      * @Author lrh 2020/10/16 10:45
@@ -139,12 +139,6 @@ public class ViewFrame {
             JLabel jLabel = allJLables.get(imageData.getNumber());
             byte[] bytes = Util.decodeUnCompress(imageData.getData());
             ImageIcon imageIcon = new ImageIcon(bytes);
-//                    int width = imageData.getWidth() - 50;
-//                    int height = imageData.getHeight()- 50;
-//                    //设置图片缩小
-//                    Image image = imageIcon.getImage();
-//                    image = image.getScaledInstance(width,height,Image.SCALE_DEFAULT);
-//                    imageIcon.setImage(image);
             jLabel.setIcon(imageIcon);
         }else{
             JLabel jLabel = new JLabel();
@@ -154,6 +148,10 @@ public class ViewFrame {
             jScrollPane.add(jLabel);
             allJLables.put(imageData.getNumber(),jLabel);
             System.out.println("allJLables="+allJLables.size());
+            //第一次直接将图片显示出来
+            byte[] bytes = Util.decodeUnCompress(imageData.getData());
+            ImageIcon imageIcon = new ImageIcon(bytes);
+            jLabel.setIcon(imageIcon);
             ComponentListener.updateUI(jScrollPane);
         }
     }
@@ -262,7 +260,7 @@ public class ViewFrame {
                 ImageData data = imageDatas.get(i);
                 long s1 = System.currentTimeMillis();
                 BufferedImage beforeBufferedImage = beforeImageData.get(data.getNumber()).getBufferedImage();
-                boolean b = Util.compareImageData(i, data.getBufferedImage(), beforeImageData);
+                boolean b = Util.compareImageData(i, data.getBufferedImage(), beforeBufferedImage);
                 System.out.println("图片是否相同= "+b+",耗时="+(System.currentTimeMillis()-s1));
                 if(b){
                     continue;
@@ -297,7 +295,11 @@ public class ViewFrame {
         while (true){
             Thread.sleep(30);
             BufferedImage screenCapture = robot.createScreenCapture(rectangle);
-            Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0,screenCapture);
+
+            //先把原图片缩小成原来的90%大小，质量为60%
+            screenCapture = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(1f).outputFormat("jpg").asBufferedImage();
+
+            Map<Integer, ImageData> imageDatas = Util.splitImageAndNum((int)(screenSize.width*0.9), (int)(screenSize.height*0.9), 0,screenCapture);
             for (int i=0;i<imageDatas.size();i++){
                 final ImageData data = imageDatas.get(i);
                 //如果是第一次，就将当前的数据保存
@@ -309,26 +311,29 @@ public class ViewFrame {
                     @Override
                     public void run() {
 //                        Rectangle rectangle = new Rectangle(data.getX(),data.getY(),data.getWidth(),data.getHeight());
-                        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+//                        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
 
                         long s1 = System.currentTimeMillis();
+                        //用来保存之前的数据进行异或操作
                         BufferedImage beforeBufferedImage = beforeImageData.get(data.getNumber()).getBufferedImage();
-                        boolean b = Util.compareImageData(j, data.getBufferedImage(), beforeImageData);
+                        boolean b = Util.compareImageData(j, data.getBufferedImage(), beforeBufferedImage);
                         System.out.println("图片是否相同= "+b+",耗时="+(System.currentTimeMillis()-s1));
                         if(!b){
-                            try {
-                                ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            //将原来的图片替换
+                            beforeImageData.get(j).setBufferedImage(data.getBufferedImage());
+                            //将图片进行异或操作
+//                            BufferedImage xorImageData = Util.getXorImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
+
+                            //将图片进行还原操作
+//                            BufferedImage bufferedImage = Util.restoreXorImageData(beforeBufferedImage, xorImageData);
                             byte[] bytes = Util.encodeImage(data.getBufferedImage());
-                            String imageData = Util.encodeAndCompress(bytes); ////对图片进行编码
-                            System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
+                            String imageData = Util.encodeAndCompress(bytes); //对图片进行编码
+                            System.out.println("发送之前图片大小="+bytes.length/1024);
                             ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
                             instance.showView(dataImage);
                         }
-                        byteArrayStream.reset();
-                        byteArrayStream = null;
+//                        byteArrayStream.reset();
+//                        byteArrayStream = null;
 
                     }
                 });
@@ -374,7 +379,8 @@ public class ViewFrame {
                                 if (beforeImageData.get(data.getNumber()) == null) {
                                     beforeImageData.put(data.getNumber(), data);
                                 }
-                                boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeImageData);
+                                BufferedImage beforeBufferedImage = beforeImageData.get(data.getNumber()).getBufferedImage();
+                                boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
                                 if(!b){
                                     try {
                                         ImageIO.write(data.getBufferedImage(), "jpg", byteArrayStream);

@@ -17,8 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.util.zip.*;
 
 /**
  * 工具类
@@ -128,7 +127,7 @@ public class Util {
     public static Map<Integer,ImageData> splitImageAndNum(int screenWidth, int screenHeight, int marginLeft, BufferedImage sourceBufferedImage){
         Map<Integer,ImageData> dataMap = new HashMap<>();
         int width_interval = 10; //宽度分成10份
-        int height_interval = 2; //高度分成2份
+        int height_interval = 3; //高度分成2份
         int width = screenWidth / width_interval;  //图片宽度
         int height = screenHeight / height_interval; //图片高度
         int x = marginLeft; //图片x坐标
@@ -184,20 +183,20 @@ public class Util {
      * 比较前后两张图片之前是否相同，如果不相同则将之前的图片更新，否则不动
      * @Author lrh 2020/10/9 11:23
      */
-    public synchronized static boolean compareImageData(int imageNumber,BufferedImage newImageData,Map<Integer, ImageData> beforeData){
+    public synchronized static boolean compareImageData(int imageNumber,BufferedImage newImageData,BufferedImage beforeBufferedImage){
         int height = newImageData.getHeight();
         int width = newImageData.getWidth();
-        ImageData imageData = beforeData.get(imageNumber);
-        BufferedImage beforeBufferedImage = imageData.getBufferedImage();
-        int intervalX = 10; //隔行扫描
-        int intervalY = 10;
+//        ImageData imageData = beforeData.get(imageNumber);
+//        BufferedImage beforeBufferedImage = imageData.getBufferedImage();
+        int intervalX = 20; //隔行扫描
+        int intervalY = 20;
         for (int x=0;x<width;x += intervalX){
             for (int y = 0;y<height;y += intervalY){
                 int newRGB = newImageData.getRGB(x, y);
                 int oldRGB = beforeBufferedImage.getRGB(x, y);
                 if(newRGB != oldRGB){
                     System.out.println("图片前后不相同，进行替换，图片编号= "+imageNumber);
-                    imageData.setBufferedImage(newImageData);
+//                    imageData.setBufferedImage(newImageData);
                     return false;
                 }
             }
@@ -205,7 +204,7 @@ public class Util {
         return true;
     }
     /**
-     * 比较前后两张图片之前是否相同，如果不相同则将之前的图片更新，否则不动
+     * 比较前后两张图片之前是否相同，如果不相同则将之前的图片更新，否则不动,获取裁剪后的大小
      * @Author lrh 2020/10/9 11:23
      */
     public static boolean compareImageData2(int imageNumber,BufferedImage newBufferedImage,ImageData newImageData,Map<Integer, ImageData> beforeData){
@@ -404,10 +403,10 @@ public class Util {
         return DestImage;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
 
 
-        File in_file = new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg");
+        /*File in_file = new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg");
         BufferedImage bufferedImage = ImageIO.read(in_file);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         //压缩
@@ -424,32 +423,37 @@ public class Util {
         JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
         BufferedImage image = decoder.decodeAsBufferedImage();
         ImageIO.write(image,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.jpg"));
-
+*/
         //先把原图片缩小成原来的90%大小，质量为60%
 //        BufferedImage bufferedImage1 = Thumbnails.of(bufferedImage).scale(0.1f).outputQuality(1f).outputFormat("jpg").asBufferedImage();
 //        ImageIO.write(bufferedImage1,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.jpg"));
 
         // 字符串超过一定的长度
-        /*String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
+        String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
                 "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
                 "aLUIGOM1TCW6ZogcEZEc52DuocUEID9+LJHFdT8wN8A2IKEuZZv1vFiNgmvG5vbo4xoulzh1c5kJ\n" +
                 "ZxVOg+q5yPb6eCth6viCoeuGWp2gmktKww/zVmi1ts5EvmD5TGo3qOpmPudzFC7sR9fTZUa3HEEy\n" +
                 "bSVFoh3sWxZS+KwV";
-        System.out.println("\n原始的字符串为------->" + str);
-        float len0=str.length();
-        System.out.println("原始的字符串长度为------->"+len0);
-        List<Integer> list = LZWcompress(str);
-        float len1=list.size();
-        System.out.println("压缩后的字符串长度为----->" + len1);
-        String jy = LZWdecompress(list);
-        System.out.println("\n解压缩后的字符串为--->" + jy);
-        System.out.println("解压缩后的字符串长度为--->"+jy.length());
-        //判断
-        if(str.equals(jy)){
-            System.out.println("先压缩再解压以后字符串和原来的是一模一样的");
-        }
-        String s = Arrays.asList(list).toString();
-        System.out.println(s.replaceAll("\\[\\[|\\]\\]",""));*/
+        System.out.println("原始字符串大小="+str.getBytes("gbk").length);
+        byte[] bytes = zipCompress(str);
+        System.out.printf("压缩后字符串大小="+bytes.length);
+
+
+//        System.out.println("\n原始的字符串为------->" + str);
+//        float len0=str.length();
+//        System.out.println("原始的字符串长度为------->"+len0);
+//        List<Integer> list = LZWcompress(str);
+//        float len1=list.size();
+//        System.out.println("压缩后的字符串长度为----->" + len1);
+//        String jy = LZWdecompress(list);
+//        System.out.println("\n解压缩后的字符串为--->" + jy);
+//        System.out.println("解压缩后的字符串长度为--->"+jy.length());
+//        //判断
+//        if(str.equals(jy)){
+//            System.out.println("先压缩再解压以后字符串和原来的是一模一样的");
+//        }
+//        String s = Arrays.asList(list).toString();
+//        System.out.println(s.replaceAll("\\[\\[|\\]\\]",""));
 
     }
 
@@ -523,7 +527,7 @@ public class Util {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
         JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(image);
-        param.setQuality(0.5f, false);
+        param.setQuality(0.75f, false);
         encoder.setJPEGEncodeParam(param);
         try {
             encoder.encode(image);
@@ -552,5 +556,96 @@ public class Util {
             e.printStackTrace();
         }
         return image;
+    }
+
+    /**
+     * zip压缩
+     *
+     * @param paramString
+     * @return
+     */
+    public static final byte[] zipCompress(String paramString) throws Exception {
+        if (paramString == null)
+            return null;
+        ByteArrayOutputStream byteArrayOutputStream = null;
+        ZipOutputStream zipOutputStream = null;
+        byte[] arrayOfByte;
+        try {
+            byteArrayOutputStream = new ByteArrayOutputStream();
+            zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
+            zipOutputStream.putNextEntry(new ZipEntry("0"));
+            zipOutputStream.write(paramString.getBytes("GBK"));//这里采用gbk方式压缩，如果采用编译器默认的utf-8，这里就直接getByte();
+            zipOutputStream.closeEntry();
+            arrayOfByte = byteArrayOutputStream.toByteArray();
+        } catch (IOException e) {
+            arrayOfByte = null;
+            throw new Exception("压缩字符串数据出错", e);
+        } finally {
+            if (zipOutputStream != null)
+                try {
+                    zipOutputStream.close();
+                } catch (IOException e) {
+                    System.out.println("关闭zipOutputStream出错,e="+e);
+                }
+            if (byteArrayOutputStream != null)
+                try {
+                    byteArrayOutputStream.close();
+                } catch (IOException e) {
+                    System.out.println("关闭byteArrayOutputStream出错,e="+e);
+                }
+        }
+        return arrayOfByte;
+    }
+    /**
+     * zip解压缩
+     *
+     * @param compressed
+     * @return
+     */
+    public static String zipDecompress(byte[] compressed) throws Exception {
+        if (compressed == null)
+            return null;
+        ByteArrayOutputStream out = null;
+        ByteArrayInputStream in = null;
+        ZipInputStream zin = null;
+        String decompressed;
+        try {
+            out = new ByteArrayOutputStream();
+            in = new ByteArrayInputStream(compressed);
+            zin = new ZipInputStream(in);
+            zin.getNextEntry();
+            byte[] buffer = new byte[1024];
+            int offset = -1;
+            while ((offset = zin.read(buffer)) != -1) {
+                out.write(buffer, 0, offset);
+            }
+            decompressed = out.toString("GBK");//相应的这里也要采用gbk方式解压缩，如果采用编译器默认的utf-8，这里就直接toString()就ok了
+        } catch (IOException e) {
+            decompressed = null;
+            throw new Exception("解压缩字符串数据出错", e);
+        } finally {
+            if (zin != null) {
+                try {
+                    zin.close();
+                } catch (IOException e) {
+                    System.out.println("关闭ZipInputStream出错,e="+e);
+                }
+            }
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    System.out.println("关闭byteArrayOutputStream出错,e="+e);
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    System.out.println("关闭ByteArrayOutputStream出错,e="+e);
+                }
+            }
+        }
+        return decompressed;
     }
 }
