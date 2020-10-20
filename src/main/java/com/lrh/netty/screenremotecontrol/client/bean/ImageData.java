@@ -15,11 +15,6 @@ public class ImageData implements Serializable {
      * @Author lrh 2020/9/25 13:32
      */
     private String data;
-    /**   
-     * 分段传输时使用，true标识已经传输完成，false 标识传输未完成
-     * @Author lrh 2020/9/25 13:33
-     */
-    private boolean isEnd;
     /**
      * 图片X坐标
      * @Author lrh 2020/9/28 12:04
@@ -40,7 +35,7 @@ public class ImageData implements Serializable {
      * @Author lrh 2020/9/28 12:04
      */
     private int width;
-    /**   
+    /**
      * 图片分割缓冲区，仅用于分割图片时使用
      * @Author lrh 2020/9/28 12:12
      */
@@ -85,9 +80,8 @@ public class ImageData implements Serializable {
     public ImageData() {
     }
 
-    public ImageData(String data, boolean isEnd, int x, int y, int height, int width, BufferedImage bufferedImage,int number,int screenWidth,int screenHeight) {
+    public ImageData(String data, int x, int y, int height, int width, BufferedImage bufferedImage,int number,int screenWidth,int screenHeight) {
         this.data = data;
-        this.isEnd = isEnd;
         this.x = x;
         this.y = y;
         this.height = height;
@@ -98,12 +92,12 @@ public class ImageData implements Serializable {
         this.screenHeight = screenHeight;
     }
 
-    public ImageData(String data, boolean isEnd, int x, int y, int height, int width,int number,int screenWidth,int screenHeight) {
-        this(data,isEnd,x,y,height,width,null,number,screenWidth,screenHeight);
+    public ImageData(String data, int x, int y, int height, int width,int number,int screenWidth,int screenHeight) {
+        this(data,x,y,height,width,null,number,screenWidth,screenHeight);
     }
 
-    public ImageData(String data, boolean isEnd) {
-        this(data,isEnd,0,0,0,0,0,0,0);
+    public ImageData(String data) {
+        this(data,0,0,0,0,0,0,0);
     }
 
     public String getData() {
@@ -112,14 +106,6 @@ public class ImageData implements Serializable {
 
     public void setData(String data) {
         this.data = data;
-    }
-
-    public boolean isEnd() {
-        return isEnd;
-    }
-
-    public void setEnd(boolean end) {
-        isEnd = end;
     }
 
     public int getX() {

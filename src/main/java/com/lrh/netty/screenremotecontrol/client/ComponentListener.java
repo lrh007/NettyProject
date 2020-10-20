@@ -1,9 +1,7 @@
 package com.lrh.netty.screenremotecontrol.client;
 
-import com.lrh.netty.screenremotecontrol.ScreenData;
+import com.lrh.netty.screenremotecontrol.ProtoMsg;
 import com.lrh.netty.screenremotecontrol.client.bean.Const;
-import com.lrh.netty.screenremotecontrol.client.bean.KeyBoard;
-import com.lrh.netty.screenremotecontrol.client.bean.Mouse;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +38,8 @@ public class ComponentListener {
                     MainFrame.setErrorMsg(" 服务器连接异常，请重启软件");
                 }else{
                     //发送消息给其他客户端，请求接受连接
-                    ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName,clientName,Const.STATUS_RECEIVE));
+                    ProtoMsg.Screen screen = ProtoMsg.Screen.newBuilder().setSendName(Const.myClientName).setReceiveName(clientName).setStatus(Const.STATUS_RECEIVE).build();
+                    ScreenClient.serverChannel.writeAndFlush(screen);
                     System.out.println("发送消息给其他客户端，请求接受连接，channel="+ScreenClient.serverChannel.isActive());
                 }
             }
@@ -55,11 +54,13 @@ public class ComponentListener {
             @Override
             public void windowClosing(WindowEvent e) {
                 if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
+                    ProtoMsg.Screen screen;
                     if(!"".equals(friendName.getText().trim())){
-                        ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName, friendName.getText().trim(), Const.STATUS_CLOSE));
+                        screen = ProtoMsg.Screen.newBuilder().setSendName(Const.myClientName).setReceiveName(friendName.getText().trim()).setStatus(Const.STATUS_CLOSE).build();
                     }else{
-                        ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName, Const.friendClientName, Const.STATUS_CLOSE));
+                        screen = ProtoMsg.Screen.newBuilder().setSendName(Const.myClientName).setReceiveName(Const.friendClientName).setStatus(Const.STATUS_CLOSE).build();
                     }
+                    ScreenClient.serverChannel.writeAndFlush(screen);
                 }
                 System.out.println("关闭MainFrame,myClientName="+Const.myClientName+",friend="+Const.friendClientName+",client="+friendName.getText().trim());
                 System.exit(0);
@@ -75,11 +76,13 @@ public class ComponentListener {
             @Override
             public void windowClosing(WindowEvent e) {
                 if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
+                    ProtoMsg.Screen screen;
                     if(!"".equals(friendName.getText().trim())){
-                        ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName, friendName.getText().trim(), Const.STATUS_CLOSE));
+                        screen = ProtoMsg.Screen.newBuilder().setSendName(Const.myClientName).setReceiveName(friendName.getText().trim()).setStatus(Const.STATUS_CLOSE).build();
                     }else{
-                        ScreenClient.serverChannel.writeAndFlush(new ScreenData(Const.myClientName, Const.friendClientName, Const.STATUS_CLOSE));
+                        screen = ProtoMsg.Screen.newBuilder().setSendName(Const.myClientName).setReceiveName(Const.friendClientName).setStatus(Const.STATUS_CLOSE).build();
                     }
+                    ScreenClient.serverChannel.writeAndFlush(screen);
                 }
                 System.exit(0);
             }
@@ -150,10 +153,15 @@ public class ComponentListener {
     public static void setMouseInfo(int x,int y,String action,int mouseType,int mouseWhileAmt){
         //向其他客户端发送鼠标消息
         if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
-            ScreenData sc = new ScreenData(Const.mouseSendClientName,Const.mouseReceiveClientName,Const.STATUS_AGREE,null);
-            Mouse mouse = new Mouse(x,y,action,mouseType,mouseWhileAmt);
-            sc.setMouse(mouse);
-            ScreenClient.serverChannel.writeAndFlush(sc);
+            //使用protobuf序列化
+            ProtoMsg.Mouse mouse = ProtoMsg.Mouse.newBuilder().setMouseX(x).setMouseY(y).setMouseAction(action).setMouseType(mouseType).setMouseWhileAmt(mouseWhileAmt).build();
+            ProtoMsg.Screen screen = ProtoMsg.Screen.newBuilder()
+                    .setSendName(Const.mouseSendClientName)
+                    .setReceiveName(Const.mouseReceiveClientName)
+                    .setStatus(Const.STATUS_AGREE)
+                    .setMouse(mouse).build();
+
+            ScreenClient.serverChannel.writeAndFlush(screen);
         }
     }
 
@@ -168,11 +176,16 @@ public class ComponentListener {
                 if(Const.MOUSE_ON){
                     //向其他客户端发送键盘消息
                     if(ScreenClient.serverChannel != null && ScreenClient.serverChannel.isActive()){
-                        ScreenData sc = new ScreenData(Const.mouseSendClientName,Const.mouseReceiveClientName,Const.STATUS_AGREE,null);
                         KeyEvent keyEvent = (KeyEvent) event;
-                        KeyBoard keyBoard = new KeyBoard(keyEvent.getKeyCode(),keyEvent.getID());
-                        sc.setKeyBoard(keyBoard);
-                        ScreenClient.serverChannel.writeAndFlush(sc);
+                        //使用protobuf序列化
+                        ProtoMsg.KeyBoard keyBoard = ProtoMsg.KeyBoard.newBuilder().setKeyCode(keyEvent.getKeyCode()).setKeyAction(keyEvent.getID()).build();
+                        ProtoMsg.Screen screen = ProtoMsg.Screen.newBuilder()
+                                .setSendName(Const.mouseSendClientName)
+                                .setReceiveName(Const.mouseReceiveClientName)
+                                .setStatus(Const.STATUS_AGREE)
+                                .setKeyBoard(keyBoard).build();
+
+                        ScreenClient.serverChannel.writeAndFlush(screen);
                     }
                 }
 //                if (((KeyEvent) event).getID() == KeyEvent.KEY_PRESSED) {

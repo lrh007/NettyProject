@@ -1,6 +1,6 @@
 package com.lrh.netty.screenremotecontrol.client;
 
-import com.lrh.netty.screenremotecontrol.ScreenData;
+import com.lrh.netty.screenremotecontrol.ProtoMsg;
 import com.lrh.netty.screenremotecontrol.client.bean.Const;
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
 import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
@@ -102,7 +102,7 @@ public class ViewFrame {
      * 展示图片
      * @Author lrh 2020/9/23 15:59
      */
-    public void showView(ImageData imageData){
+    public void showView(ProtoMsg.Image imageData){
         //第一种方式，传输整个图片，速度慢
 //        byte[] bytes = Util.decodeUnCompress(imageData.getData());
 //        ImageIcon imageIcon = new ImageIcon(bytes);
@@ -155,7 +155,32 @@ public class ViewFrame {
             ComponentListener.updateUI(jScrollPane);
         }
     }
-
+    /**
+     * 展示图片
+     * @Author lrh 2020/9/23 15:59
+     */
+    public void showView2(ImageData imageData){
+        //第四种方式，分块传输，动态创建JLabel，优点：是不用合并图片，缺点：需要创建多个JLabel
+        if(allJLables.get(imageData.getNumber()) != null){
+            JLabel jLabel = allJLables.get(imageData.getNumber());
+            byte[] bytes = Util.decodeUnCompress(imageData.getData());
+            ImageIcon imageIcon = new ImageIcon(bytes);
+            jLabel.setIcon(imageIcon);
+        }else{
+            JLabel jLabel = new JLabel();
+            jLabel.setOpaque(true);
+            jLabel.setBackground(Color.black);
+            jLabel.setBounds(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
+            jScrollPane.add(jLabel);
+            allJLables.put(imageData.getNumber(),jLabel);
+            System.out.println("allJLables="+allJLables.size());
+            //第一次直接将图片显示出来
+            byte[] bytes = Util.decodeUnCompress(imageData.getData());
+            ImageIcon imageIcon = new ImageIcon(bytes);
+            jLabel.setIcon(imageIcon);
+            ComponentListener.updateUI(jScrollPane);
+        }
+    }
     /**
      * 事件监听
      * @Author lrh 2020/9/22 16:22
@@ -230,7 +255,7 @@ public class ViewFrame {
                 //        Graphics g = instance.jPanel.getBufferedImage().getGraphics();
 
                 data.setData(Util.encodeAndCompress(byteArrayStream.toByteArray()));
-                instance.showView(data);
+                instance.showView2(data);
                 byteArrayStream.reset();
 //            g.drawImage(data.getBufferedImage(),data.getX(),data.getY(),data.getWidth(),data.getHeight(),null);
             }
@@ -268,8 +293,8 @@ public class ViewFrame {
                 ImageIO.write(data.getBufferedImage(),"jpg",byteArrayStream);
                 String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
                 System.out.println("发送之前图片大小="+byteArrayStream.toByteArray().length/1024);
-                ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,i,screenSize.width,screenSize.height);
-                instance.showView(dataImage);
+                ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,i,screenSize.width,screenSize.height);
+                instance.showView2(dataImage);
                 byteArrayStream.reset();
             }
 
@@ -329,8 +354,8 @@ public class ViewFrame {
                             byte[] bytes = Util.encodeImage(data.getBufferedImage());
                             String imageData = Util.encodeAndCompress(bytes); //对图片进行编码
                             System.out.println("发送之前图片大小="+bytes.length/1024);
-                            ImageData dataImage = new ImageData(imageData,false,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
-                            instance.showView(dataImage);
+                            ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
+                            instance.showView2(dataImage);
                         }
 //                        byteArrayStream.reset();
 //                        byteArrayStream = null;
@@ -386,7 +411,7 @@ public class ViewFrame {
                                         ImageIO.write(data.getBufferedImage(), "jpg", byteArrayStream);
                                         String imageData = Util.encodeAndCompress(byteArrayStream.toByteArray()); ////对图片进行编码
                                         System.out.println("发送之前图片大小=" + byteArrayStream.toByteArray().length / 1024);
-                                        ImageData dataImage = new ImageData(imageData, false, data.getX(), data.getY(), data.getHeight(), data.getWidth(), null, data.getNumber(), screenSize.width, screenSize.height);
+                                        ImageData dataImage = new ImageData(imageData, data.getX(), data.getY(), data.getHeight(), data.getWidth(), null, data.getNumber(), screenSize.width, screenSize.height);
                                         blockingQueue.put(dataImage);
                                     } catch (Exception e) {
                                         e.printStackTrace();
@@ -415,7 +440,7 @@ public class ViewFrame {
                     if(data == null){
                         continue;
                     }
-                    instance.showView(data);
+                    instance.showView2(data);
                 }
             }
         });

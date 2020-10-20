@@ -1,11 +1,12 @@
 package com.lrh.netty.screenremotecontrol.server;
 
-import com.lrh.netty.screenremotecontrol.ScreenData;
+import com.lrh.netty.screenremotecontrol.ProtoMsg;
+import com.lrh.netty.screenremotecontrol.client.bean.Const;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /** 业务处理
  * @Author lrh 2020/9/21 14:58
  */
-public class ScreenServerHandler extends SimpleChannelInboundHandler<ScreenData> {
+public class ScreenServerHandler extends ChannelInboundHandlerAdapter {
     /**
      * 保存所有的客户端信息<br>
      * key = 客户端名称，value = Channel
@@ -31,14 +32,13 @@ public class ScreenServerHandler extends SimpleChannelInboundHandler<ScreenData>
         System.out.println("客户端上线，地址："+ctx.channel().remoteAddress()+" ，名称： "+randomName);
         CLIENTMAP.put(randomName,ctx.channel());
         //向客户端发送注册成功的名称
-        ScreenData screenData = new ScreenData();
-        screenData.setContent(randomName);
-        ctx.channel().writeAndFlush(screenData);
+        ProtoMsg.Screen screen = ProtoMsg.Screen.newBuilder().setContent(randomName).setStatus(Const.STATUS_CONTINUE).build();
+        ctx.channel().writeAndFlush(screen);
     }
 
-
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, ScreenData screenData) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        ProtoMsg.Screen screenData = (ProtoMsg.Screen) msg;
         Channel otherChannel = CLIENTMAP.get(screenData.getReceiveName());
         //数据转发指定的客户端
         if(otherChannel != null){
@@ -53,13 +53,15 @@ public class ScreenServerHandler extends SimpleChannelInboundHandler<ScreenData>
                 }
             }else{
                 //接收方不是ALL,并且找不到的情况下，直接返回提示信息
-                screenData.setContent("【"+screenData.getReceiveName()+" 客户端不在线】");
-                screenData.setStatus(404);
-                ctx.channel().writeAndFlush(screenData);
+                ProtoMsg.Screen screen = ProtoMsg.Screen.newBuilder()
+                        .setSendName(screenData.getSendName())
+                        .setReceiveName(screenData.getReceiveName())
+                        .setContent("【" + screenData.getReceiveName() + " 客户端不在线】")
+                        .setStatus(Const.STATUS_NOT_FOUND).build();
+                ctx.channel().writeAndFlush(screen);
             }
         }
     }
-
 
 
     @Override

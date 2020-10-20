@@ -137,7 +137,7 @@ public class Util {
         int index = 0; //图片编号
         for (int i = 0; i < height_interval; i++) {
             for (int j = 0; j < width_interval; j++) {
-                dataMap.put(index,new ImageData(null,false,x,y,height,width,sourceBufferedImage.getSubimage(x, y, width, height),index,screenWidth,screenHeight));
+                dataMap.put(index,new ImageData(null,x,y,height,width,sourceBufferedImage.getSubimage(x, y, width, height),index,screenWidth,screenHeight));
                 System.out.println("分割图片位置[number="+index+",x="+x+",y="+y+",width="+width+",height="+height+"]");
                 x += width;
                 if(j+1 >= width_interval){
@@ -167,7 +167,7 @@ public class Util {
         int index = 0; //图片编号
         for (int i = 0; i < height_interval; i++) {
             for (int j = 0; j < width_interval; j++) {
-                dataMap.put(index,new ImageData(null,false,x,y,height,width,null,index,screenWidth,screenHeight));
+                dataMap.put(index,new ImageData(null,x,y,height,width,null,index,screenWidth,screenHeight));
                 System.out.println("分割图片位置[number="+index+",x="+x+",y="+y+",width="+width+",height="+height+"]");
                 x += width;
                 if(j+1 >= width_interval){

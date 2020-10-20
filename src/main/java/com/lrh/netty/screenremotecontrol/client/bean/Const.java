@@ -103,6 +103,11 @@ public class Const {
      */
     public static final int STATUS_NOT_FOUND = 404;
     /**   
+     * 允许继续操作
+     * @Author lrh 2020/10/20 15:26
+     */
+    public static final int STATUS_CONTINUE = 100;
+    /**   
      * 发送数据的间隔，单位毫秒
      * @Author lrh 2020/9/24 14:36
      */
