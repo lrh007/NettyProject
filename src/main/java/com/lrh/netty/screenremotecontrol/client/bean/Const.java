@@ -13,12 +13,12 @@ public class Const {
      * 客户端自己的名称
      * @Author lrh 2020/9/22 9:55
      */
-    public static String myClientName;
+    public static String myClientName = "";
     /**   
      * 其他客户端的名称
      * @Author lrh 2020/9/24 10:16
      */
-    public static String friendClientName;
+    public static String friendClientName = "";
 
     /**
      * 服务器ip
@@ -147,18 +147,18 @@ public class Const {
      * 鼠标发送消息时，自己的客户端名称
      * @Author lrh 2020/9/24 17:14
      */
-    public static String mouseSendClientName = null;
+    public static String mouseSendClientName = "";
     /**
      * 鼠标发送消息时，接受数据的客户端名称
      * @Author lrh 2020/9/24 17:15
      */
-    public static String mouseReceiveClientName = null;
+    public static String mouseReceiveClientName = "";
     
     /**   
      * 键盘事件
      * @Author lrh 2020/9/24 14:48
      */
-    public static String keyBoardAction;
+    public static String keyBoardAction = "";
     /**   
      * 缩放比例
      * @Author lrh 2020/10/19 18:03

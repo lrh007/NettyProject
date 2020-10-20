@@ -1,15 +1,14 @@
 <component name="ArtifactManager">
-  <artifact build-on-make="true" name="NettyProject:jar">
+  <artifact type="jar" build-on-make="true" name="NettyProject:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/NettyProject_jar</output-path>
-    <root id="root">
-      <element id="archive" name="NettyProject.jar">
-        <element id="directory" name="META-INF">
-          <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
-        </element>
-        <element id="module-output" name="NettyProject" />
+    <root id="archive" name="NettyProject.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
       </element>
-      <element id="library" level="project" name="Maven: net.coobird:thumbnailator:0.4.8" />
-      <element id="library" level="project" name="Maven: io.netty:netty-all:4.1.43.Final" />
+      <element id="module-output" name="NettyProject" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/net/coobird/thumbnailator/0.4.8/thumbnailator-0.4.8.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.13.0/protobuf-java-3.13.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/io/netty/netty-all/4.1.43.Final/netty-all-4.1.43.Final.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
