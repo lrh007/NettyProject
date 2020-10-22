@@ -1,24 +1,28 @@
 package com.lrh.netty.screenremotecontrol.client;
 
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
-import com.sun.deploy.util.StringUtils;
+import com.luciad.imageio.webp.WebPReadParam;
+import com.luciad.imageio.webp.WebPReader;
+import com.luciad.imageio.webp.WebPWriteParam;
+import com.luciad.imageio.webp.WebPWriter;
 import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGEncodeParam;
 import com.sun.image.codec.jpeg.JPEGImageDecoder;
 import com.sun.image.codec.jpeg.JPEGImageEncoder;
-import net.coobird.thumbnailator.Thumbnails;
 
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
+import javax.imageio.*;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.stream.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.RenderedImage;
 import java.io.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.zip.*;
+
+import static javax.imageio.ImageWriteParam.MODE_EXPLICIT;
 
 /**
  * 工具类
@@ -434,25 +438,6 @@ public class Util {
 //        BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
 //        ImageIO.write(image,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.jpg"));
 
-        double scale = 0.8;
-        File file = new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg");
-        BufferedImage bufferedImage;
-            bufferedImage = ImageIO.read(file);
-            int width = bufferedImage.getWidth();
-            int height = bufferedImage.getHeight();
-
-            width = (int)(width * scale);
-            height = (int)(height * scale);
-
-            Image image = bufferedImage.getScaledInstance(width, height,
-                    Image.SCALE_SMOOTH);
-            BufferedImage outputImage = new BufferedImage(width, height,
-                    BufferedImage.TYPE_INT_RGB);
-            Graphics graphics = outputImage.getGraphics();
-            graphics.drawImage(image, 0, 0, null);
-            graphics.dispose();
-
-            ImageIO.write(outputImage, "jpg", new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\3.jpg"));
 
             // 字符串超过一定的长度
        /* String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
@@ -481,8 +466,57 @@ public class Util {
 //        String s = Arrays.asList(list).toString();
 //        System.out.println(s.replaceAll("\\[\\[|\\]\\]",""));
 
-    }
+//        System.load("C:\\Users\\MACHENIKE\\AppData\\Local\\Temp\\libwebp-imageio.so");
+//        System.out.println(System.getProperty("user.dir"));
+//        File outfile = File.createTempFile("imageio", ".dll",new File(System.getProperty("user.dir")));
+//        System.out.println(outfile.getAbsolutePath());
 
+//        this.getClass().getClassLoader().getResource("META-INF/lib/windows_64/" + "webp-imageio.dll");
+
+
+        //编码
+        String inputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg";
+        String outputWebpPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.webp";
+//        Robot robot = new Robot();
+//        BufferedImage screenCapture = robot.createScreenCapture(new Rectangle(0, 0, 192, 540));
+//        ImageIO.write(screenCapture,"jpg",new File(inputJpgPath));
+//        byte[] bytes = webpEncode(screenCapture,0.3f);
+//        System.out.println(bytes.length);
+
+        //解码
+        String inputWebpPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.webp";
+        String outputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\3.jpg";
+        FileInputStream in = new FileInputStream(new File(inputWebpPath));
+        ByteArrayOutputStream arry = new ByteArrayOutputStream();
+        BufferedImage image = ImageIO.read(in);
+        ImageIO.write(image,"jpg",arry);
+
+        WebPReader reader = (WebPReader)ImageIO.getImageReadersByMIMEType("image/webp").next();
+        WebPReadParam readParam = new WebPReadParam();
+        readParam.setBypassFiltering(true);
+//        reader.setInput(new FileImageInputStream(new File(inputWebpPath)));
+//        reader.setInput();
+        BufferedImage image2 = reader.readToBufferedImage(arry.toByteArray(), readParam,image.getWidth(),image.getHeight());
+        ImageIO.write(image2, "jpg", new File(outputJpgPath));
+    }
+    /**   
+     * 将图片转换成webp格式
+     * @param qualit 0-1 之间，表示图片质量，默认0.3
+     * @Author lrh 2020/10/22 15:40
+     */
+    public static byte[] webpEncode(BufferedImage bufferedImage,float qualit){
+        WebPWriter writer = (WebPWriter)ImageIO.getImageWritersByMIMEType("image/webp").next();
+        WebPWriteParam writeParam = new WebPWriteParam(writer.getLocale());
+        writeParam.setCompressionMode(MODE_EXPLICIT); //压缩模式，不能变
+        writeParam.setCompressionType("Lossy"); //Lossless 无损压缩，Lossy 有损压缩
+        writeParam.setCompressionQuality(qualit); //压缩质量
+        try {
+           return writer.writeToByteArray((IIOMetadata) null, new IIOImage(bufferedImage, (List) null, (IIOMetadata) null), writeParam);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     /**
      *
      * 自己设置压缩质量来把图片压缩成byte[]
@@ -505,7 +539,7 @@ public class Util {
 
         // 得到指定writer的输出参数设置(ImageWriteParam )
         ImageWriteParam iwp = writer.getDefaultWriteParam();
-        iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT); // 设置可否压缩
+        iwp.setCompressionMode(MODE_EXPLICIT); // 设置可否压缩
         iwp.setCompressionQuality(quality); // 设置压缩质量参数
 
         iwp.setProgressiveMode(ImageWriteParam.MODE_DISABLED);

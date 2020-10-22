@@ -164,8 +164,20 @@ public class ViewFrame {
         if(allJLables.get(imageData.getNumber()) != null){
             JLabel jLabel = allJLables.get(imageData.getNumber());
             byte[] bytes = Util.decodeUnCompress(imageData.getData());
-            ImageIcon imageIcon = new ImageIcon(bytes);
-            jLabel.setIcon(imageIcon);
+//            ImageIcon imageIcon = new ImageIcon(bytes);
+//            jLabel.setIcon(imageIcon);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+                ImageIO.write(image,"jpg",out);
+                ImageIcon imageIcon = new ImageIcon(out.toByteArray());
+                jLabel.setIcon(imageIcon);
+                out.reset();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }else{
             JLabel jLabel = new JLabel();
             jLabel.setOpaque(true);
@@ -176,8 +188,18 @@ public class ViewFrame {
             System.out.println("allJLables="+allJLables.size());
             //第一次直接将图片显示出来
             byte[] bytes = Util.decodeUnCompress(imageData.getData());
-            ImageIcon imageIcon = new ImageIcon(bytes);
-            jLabel.setIcon(imageIcon);
+//            ImageIcon imageIcon = new ImageIcon(bytes);
+//            jLabel.setIcon(imageIcon);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+                ImageIO.write(image,"jpg",out);
+                ImageIcon imageIcon = new ImageIcon(out.toByteArray());
+                jLabel.setIcon(imageIcon);
+                out.reset();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             ComponentListener.updateUI(jScrollPane);
         }
     }
@@ -351,7 +373,8 @@ public class ViewFrame {
 
                             //将图片进行还原操作
 //                            BufferedImage bufferedImage = Util.restoreXorImageData(beforeBufferedImage, xorImageData);
-                            byte[] bytes = Util.encodeImage(data.getBufferedImage());
+//                            byte[] bytes = Util.encodeImage(data.getBufferedImage());
+                            byte[] bytes = Util.webpEncode(data.getBufferedImage(), 0.3f);
                             String imageData = Util.encodeAndCompress(bytes); //对图片进行编码
                             System.out.println("发送之前图片大小="+bytes.length/1024);
                             ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
