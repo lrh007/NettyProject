@@ -1,16 +1,17 @@
-package com.lrh.netty.simple;
+package com.lrh.netty.protobuf2;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
 
-public class NettyServer {
-    public static void main(String[] args) throws InterruptedException {
+public class ProtoBufServer {
+    public static void main(String[] args) {
         //创建bossgroup 和workgroup
         /*
           * 1，创建两个线程组
@@ -30,14 +31,24 @@ public class NettyServer {
                         //给pipeLine设置处理器
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            socketChannel.pipeline().addLast(null);
+                            ChannelPipeline pipeline = socketChannel.pipeline();
+                            //在pipeline中添加ProtoBufDecoder解码器,指定对那种对象进行解码
+                            pipeline.addLast("decoder",new ProtobufDecoder(MyDataInfo.MyMessage.getDefaultInstance()));
+                            pipeline.addLast(new ProtoBufServerHandler());
                         }
                     }); //给我们的workGroup 的EventLoop 对应的管道设置处理器
         System.out.println("服务器准备好了。。。");
-        //绑定了一个端口并且同步，生成了一个ChannelFuture对象
-        ChannelFuture sync = bootstrap.bind(8080).sync();
-        //对关闭通道进行监听
-        sync.channel().closeFuture().sync();
+        try {
+            //绑定了一个端口并且同步，生成了一个ChannelFuture对象
+            ChannelFuture sync = bootstrap.bind(8080).sync();
+            //对关闭通道进行监听
+            sync.channel().closeFuture().sync();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }finally {
+            bossGroup.shutdownGracefully();
+            workGroup.shutdownGracefully();
+        }
 
     }
 }
