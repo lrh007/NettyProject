@@ -3,6 +3,7 @@ package com.lrh.netty.http.proxy3;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 
 /**
@@ -25,12 +26,16 @@ public class HttpProxyClientTargetHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-//        ByteBuf buf = (ByteBuf) msg;
-//        System.out.println("向代理服务器转发消息： "+buf.toString(CharsetUtil.UTF_8));
-        System.out.println("向代理服务器转发消息");
+        System.out.println("向代理服务器转发消息： "+((ByteBuf) msg).toString(CharsetUtil.UTF_8));
+//        System.out.println("向代理服务器转发消息");
         //向代理服务器转发消息
         if(proxyServerInsideChannel != null){
+            ByteBuf b = Unpooled.copiedBuffer("hhhhh",CharsetUtil.UTF_8);
+            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,b);
+            response.headers().set(HttpHeaderNames.CONTENT_LENGTH,b.readableBytes());
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE,"text/plain;charset=UTF-8");
             ChannelFuture future = proxyServerInsideChannel.writeAndFlush(msg);
+           /* ChannelFuture future = proxyServerInsideChannel.writeAndFlush(msg);
             future.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture channelFuture) throws Exception {
@@ -41,7 +46,7 @@ public class HttpProxyClientTargetHandler extends ChannelInboundHandlerAdapter {
                         proxyServerInsideChannel.close();
                     }
                 }
-            });
+            });*/
         }
     }
 

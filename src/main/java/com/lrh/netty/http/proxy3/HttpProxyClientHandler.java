@@ -8,6 +8,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
@@ -52,6 +53,7 @@ public class HttpProxyClientHandler extends ChannelInboundHandlerAdapter {
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         ChannelPipeline pipeline = socketChannel.pipeline();
 //                        pipeline.addLast(new LoggingHandler(LogLevel.INFO));
+                        pipeline.addLast(new HttpResponseEncoder());
                         pipeline.addLast(new HttpObjectAggregator(6553600));
                         pipeline.addLast(new HttpProxyClientTargetHandler(proxyServerInsideChannel));
                     }

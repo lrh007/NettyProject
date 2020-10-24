@@ -16,8 +16,8 @@ public class TestServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-//        ByteBuf buf = (ByteBuf) msg;
-//        System.out.println(buf.toString(CharsetUtil.UTF_8));
+        /*ByteBuf buf = (ByteBuf) msg;
+        System.out.println(buf.toString(CharsetUtil.UTF_8));*/
         ByteBuf data = Unpooled.copiedBuffer("hhhh",CharsetUtil.UTF_8);
 //        ctx.writeAndFlush(data);
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,data);

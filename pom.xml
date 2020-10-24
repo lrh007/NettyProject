@@ -21,6 +21,14 @@
     </build>
 
     <dependencies>
+        <!--图片压缩工具-->
+        <!-- https://mvnrepository.com/artifact/net.coobird/thumbnailator -->
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>0.4.8</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
         <dependency>
             <groupId>io.netty</groupId>
@@ -41,6 +49,13 @@
             <version>3.11.4</version>
         </dependency>
 
-
+        <!--这个版本必须是0.1.0 其他版本经试验不行-->
+        <dependency>
+            <groupId>com.github.nintha</groupId>
+            <artifactId>webp-imageio-core</artifactId>
+            <version>0.1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/webp-imageio-core-0.1.0.jar</systemPath>
+        </dependency>
     </dependencies>
 </project>
