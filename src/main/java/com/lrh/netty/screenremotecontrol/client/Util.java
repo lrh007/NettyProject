@@ -473,7 +473,6 @@ public class Util {
 
 //        this.getClass().getClassLoader().getResource("META-INF/lib/windows_64/" + "webp-imageio.dll");
 
-
         //编码
         String inputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg";
         String outputWebpPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.webp";
@@ -494,7 +493,7 @@ public class Util {
         WebPReader reader = (WebPReader)ImageIO.getImageReadersByMIMEType("image/webp").next();
         WebPReadParam readParam = new WebPReadParam();
         readParam.setBypassFiltering(true);
-//        reader.setInput(new FileImageInputStream(new File(inputWebpPath)));
+        reader.setInput(new FileImageInputStream(new File(inputWebpPath)));
 //        reader.setInput();
         BufferedImage image2 = reader.readToBufferedImage(arry.toByteArray(), readParam,image.getWidth(),image.getHeight());
         ImageIO.write(image2, "jpg", new File(outputJpgPath));

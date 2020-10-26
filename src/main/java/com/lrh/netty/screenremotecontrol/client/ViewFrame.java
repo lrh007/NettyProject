@@ -3,10 +3,13 @@ package com.lrh.netty.screenremotecontrol.client;
 import com.lrh.netty.screenremotecontrol.ProtoMsg;
 import com.lrh.netty.screenremotecontrol.client.bean.Const;
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
+import com.luciad.imageio.webp.WebPReadParam;
+import com.luciad.imageio.webp.WebPReader;
 import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
+import javax.imageio.stream.FileImageInputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -344,9 +347,10 @@ public class ViewFrame {
             BufferedImage screenCapture = robot.createScreenCapture(rectangle);
 
             //先把原图片缩小成原来的90%大小，质量为60%
-            screenCapture = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(1f).outputFormat("jpg").asBufferedImage();
+//            screenCapture = Thumbnails.of(screenCapture).scale(0.9f).outputQuality(1f).outputFormat("jpg").asBufferedImage();
 
-            Map<Integer, ImageData> imageDatas = Util.splitImageAndNum((int)(screenSize.width*0.9), (int)(screenSize.height*0.9), 0,screenCapture);
+//            Map<Integer, ImageData> imageDatas = Util.splitImageAndNum((int)(screenSize.width*0.9), (int)(screenSize.height*0.9), 0,screenCapture);
+            Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0,screenCapture);
             for (int i=0;i<imageDatas.size();i++){
                 final ImageData data = imageDatas.get(i);
                 //如果是第一次，就将当前的数据保存
@@ -354,9 +358,9 @@ public class ViewFrame {
                     beforeImageData.put(data.getNumber(),data);
                 }
                 final int j = i;
-                threadPool.execute(new Runnable() {
-                    @Override
-                    public void run() {
+//                threadPool.execute(new Runnable() {
+//                    @Override
+//                    public void run() {
 //                        Rectangle rectangle = new Rectangle(data.getX(),data.getY(),data.getWidth(),data.getHeight());
 //                        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
 
@@ -376,15 +380,26 @@ public class ViewFrame {
 //                            byte[] bytes = Util.encodeImage(data.getBufferedImage());
                             byte[] bytes = Util.webpEncode(data.getBufferedImage(), 0.3f);
                             String imageData = Util.encodeAndCompress(bytes); //对图片进行编码
-                            System.out.println("发送之前图片大小="+bytes.length/1024);
-                            ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
-                            instance.showView2(dataImage);
+//                            System.out.println("发送之前图片大小="+bytes.length/1024);
+//                            ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
+//                            instance.showView2(dataImage);
+
+                            String outputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\";
+                            byte[] bytes2 = Util.decodeUnCompress(imageData);
+                            ByteArrayOutputStream out = new ByteArrayOutputStream();
+                            try {
+                                BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes2));
+                                ImageIO.write(image,"jpg",new File(outputJpgPath+new Random().nextInt(Integer.MAX_VALUE)+".jpg"));
+                                out.reset();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
 //                        byteArrayStream.reset();
 //                        byteArrayStream = null;
 
-                    }
-                });
+//                    }
+//                });
 
             }
         }
