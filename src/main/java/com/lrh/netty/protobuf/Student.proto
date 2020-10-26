@@ -1,0 +1,7 @@
+syntax = "proto3"; //版本
+option java_outer_classname = "StudentPOJO"; //生成的外部类名，同时也是文件名
+//protobuf 使用message 管理数据
+message Studnet{ //会在StudentPOJO 外部类中生成一个内部类Student , 这个内部类才是真正发送的POJO对象
+  int32 id = 1; //Student 类中有一个属性名字为 id ,类型为 int32(protobuf类型，类型全是小写)，这里的1 表示属性序号，不是属性值
+  string name = 2;
+}
