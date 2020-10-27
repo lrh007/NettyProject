@@ -167,42 +167,23 @@ public class ViewFrame {
         if(allJLables.get(imageData.getNumber()) != null){
             JLabel jLabel = allJLables.get(imageData.getNumber());
             byte[] bytes = Util.decodeUnCompress(imageData.getData());
-//            ImageIcon imageIcon = new ImageIcon(bytes);
-//            jLabel.setIcon(imageIcon);
-
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            try {
-                BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
-                ImageIO.write(image,"jpg",out);
-                ImageIcon imageIcon = new ImageIcon(out.toByteArray());
-                jLabel.setIcon(imageIcon);
-                out.reset();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            BufferedImage image = Util.webpDecode(bytes);
+            ImageIcon imageIcon = new ImageIcon(image);
+            jLabel.setIcon(imageIcon);
 
         }else{
             JLabel jLabel = new JLabel();
             jLabel.setOpaque(true);
-            jLabel.setBackground(Color.black);
+//            jLabel.setBackground(Color.black);
             jLabel.setBounds(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
             jScrollPane.add(jLabel);
             allJLables.put(imageData.getNumber(),jLabel);
             System.out.println("allJLables="+allJLables.size());
             //第一次直接将图片显示出来
             byte[] bytes = Util.decodeUnCompress(imageData.getData());
-//            ImageIcon imageIcon = new ImageIcon(bytes);
-//            jLabel.setIcon(imageIcon);
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            try {
-                BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
-                ImageIO.write(image,"jpg",out);
-                ImageIcon imageIcon = new ImageIcon(out.toByteArray());
-                jLabel.setIcon(imageIcon);
-                out.reset();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            BufferedImage image = Util.webpDecode(bytes);
+            ImageIcon imageIcon = new ImageIcon(image);
+            jLabel.setIcon(imageIcon);
             ComponentListener.updateUI(jScrollPane);
         }
     }
@@ -339,6 +320,7 @@ public class ViewFrame {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         Rectangle rectangle = new Rectangle(screenSize);
+//        Rectangle rectangle = new Rectangle(100,200,300,300);
 
         Robot robot = new Robot();
         ConcurrentHashMap<Integer, ImageData> beforeImageData = new ConcurrentHashMap<>(); //存放上一次的图片数据，用来和这次进行对比
@@ -351,6 +333,7 @@ public class ViewFrame {
 
 //            Map<Integer, ImageData> imageDatas = Util.splitImageAndNum((int)(screenSize.width*0.9), (int)(screenSize.height*0.9), 0,screenCapture);
             Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0,screenCapture);
+//            Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(300, 300, 0,screenCapture);
             for (int i=0;i<imageDatas.size();i++){
                 final ImageData data = imageDatas.get(i);
                 //如果是第一次，就将当前的数据保存
@@ -379,21 +362,15 @@ public class ViewFrame {
 //                            BufferedImage bufferedImage = Util.restoreXorImageData(beforeBufferedImage, xorImageData);
 //                            byte[] bytes = Util.encodeImage(data.getBufferedImage());
                             byte[] bytes = Util.webpEncode(data.getBufferedImage(), 0.3f);
-                            String imageData = Util.encodeAndCompress(bytes); //对图片进行编码
-//                            System.out.println("发送之前图片大小="+bytes.length/1024);
+//                            String imageData = Util.encodeAndCompress(bytes); //对图片进行编码
+                            System.out.println("发送之前图片大小="+bytes.length/1024);
 //                            ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
 //                            instance.showView2(dataImage);
 
-                            String outputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\";
-                            byte[] bytes2 = Util.decodeUnCompress(imageData);
-                            ByteArrayOutputStream out = new ByteArrayOutputStream();
-                            try {
-                                BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes2));
-                                ImageIO.write(image,"jpg",new File(outputJpgPath+new Random().nextInt(Integer.MAX_VALUE)+".jpg"));
-                                out.reset();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+
+//                            byte[] bytes2 = Util.decodeUnCompress(imageData);
+                            BufferedImage image = Util.webpDecode(bytes);
+                            ImageIO.write(image,"webp",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\"+new Random().nextInt(Integer.MAX_VALUE)+".jpg"));
                         }
 //                        byteArrayStream.reset();
 //                        byteArrayStream = null;

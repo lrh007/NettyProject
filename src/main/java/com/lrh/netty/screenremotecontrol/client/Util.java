@@ -18,6 +18,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
 import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 import java.util.zip.*;
@@ -474,8 +476,8 @@ public class Util {
 //        this.getClass().getClassLoader().getResource("META-INF/lib/windows_64/" + "webp-imageio.dll");
 
         //编码
-        String inputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg";
-        String outputWebpPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.webp";
+//        String inputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg";
+//        String outputWebpPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.webp";
 //        Robot robot = new Robot();
 //        BufferedImage screenCapture = robot.createScreenCapture(new Rectangle(0, 0, 192, 540));
 //        ImageIO.write(screenCapture,"jpg",new File(inputJpgPath));
@@ -483,20 +485,33 @@ public class Util {
 //        System.out.println(bytes.length);
 
         //解码
-        String inputWebpPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.webp";
-        String outputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\3.jpg";
-        FileInputStream in = new FileInputStream(new File(inputWebpPath));
-        ByteArrayOutputStream arry = new ByteArrayOutputStream();
-        BufferedImage image = ImageIO.read(in);
-        ImageIO.write(image,"jpg",arry);
+//        String inputWebpPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.webp";
+//        String outputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\3.jpg";
+//        FileInputStream in = new FileInputStream(new File(inputWebpPath));
+//        ByteArrayOutputStream arry = new ByteArrayOutputStream();
+//        BufferedImage image = ImageIO.read(in);
+//        ImageIO.write(image,"webp",arry);
+//
+//        BufferedImage image2 = webpDecode(arry.toByteArray());
+//        ImageIO.write(image2, "jpg", new File(outputJpgPath));
 
-        WebPReader reader = (WebPReader)ImageIO.getImageReadersByMIMEType("image/webp").next();
-        WebPReadParam readParam = new WebPReadParam();
-        readParam.setBypassFiltering(true);
-        reader.setInput(new FileImageInputStream(new File(inputWebpPath)));
-//        reader.setInput();
-        BufferedImage image2 = reader.readToBufferedImage(arry.toByteArray(), readParam,image.getWidth(),image.getHeight());
-        ImageIO.write(image2, "jpg", new File(outputJpgPath));
+    }
+
+    /**
+     * 将图片转换成webp格式
+     * @param qualit 0-1 之间，表示图片质量，默认0.3
+     * @Author lrh 2020/10/22 15:40
+     */
+    public static byte[] webpEncode2(BufferedImage bufferedImage,float qualit) throws IOException {
+        ImageWriter writer = (ImageWriter)ImageIO.getImageWritersByMIMEType("image/webp").next();
+        WebPWriteParam writeParam = new WebPWriteParam(writer.getLocale());
+        writeParam.setCompressionMode(1);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        MemoryCacheImageOutputStream m = new MemoryCacheImageOutputStream(out);
+        writer.setOutput(m);
+        writer.write((IIOMetadata)null, new IIOImage(bufferedImage, (List)null, (IIOMetadata)null), writeParam);
+        m.flush();//需要调用这个方法，将内存中的数据刷新到输出流中，否则输出流没有数据
+        return out.toByteArray();
     }
     /**   
      * 将图片转换成webp格式
@@ -509,13 +524,39 @@ public class Util {
         writeParam.setCompressionMode(MODE_EXPLICIT); //压缩模式，不能变
         writeParam.setCompressionType("Lossy"); //Lossless 无损压缩，Lossy 有损压缩
         writeParam.setCompressionQuality(qualit); //压缩质量
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MemoryCacheImageOutputStream m = new MemoryCacheImageOutputStream(outputStream);
+        writer.setOutput(m);
         try {
-           return writer.writeToByteArray((IIOMetadata) null, new IIOImage(bufferedImage, (List) null, (IIOMetadata) null), writeParam);
+//           return writer.writeToByteArray((IIOMetadata) null, new IIOImage(bufferedImage, (List) null, (IIOMetadata) null), writeParam);
+           writer.write((IIOMetadata)null, new IIOImage(bufferedImage, (List)null, (IIOMetadata)null), writeParam);
+           m.flush();//需要调用这个方法，将内存中的数据刷新到输出流中，否则输出流没有数据
+           return outputStream.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
+    /**   
+     * 将webp字节数组解码
+     * @Author lrh 2020/10/27 13:51
+     */
+    public static BufferedImage webpDecode(byte[] bytes){
+        WebPReader reader = (WebPReader)ImageIO.getImageReadersByMIMEType("image/webp").next();
+        WebPReadParam readParam = new WebPReadParam();
+        readParam.setBypassFiltering(true);
+        MemoryCacheImageInputStream in = new MemoryCacheImageInputStream(new ByteArrayInputStream(bytes));
+        reader.setInput(in);
+        try {
+            in.flush();
+            return reader.read(0, readParam);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    
     /**
      *
      * 自己设置压缩质量来把图片压缩成byte[]
