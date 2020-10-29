@@ -2,9 +2,7 @@ package com.lrh.netty.screenremotecontrol.client;
 
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
 import com.luciad.imageio.webp.WebPReadParam;
-import com.luciad.imageio.webp.WebPReader;
 import com.luciad.imageio.webp.WebPWriteParam;
-import com.luciad.imageio.webp.WebPWriter;
 import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGEncodeParam;
 import com.sun.image.codec.jpeg.JPEGImageDecoder;
@@ -33,100 +31,6 @@ import static javax.imageio.ImageWriteParam.MODE_EXPLICIT;
  */
 public class Util {
 
-
-    /**
-     * 使用gzip压缩字符串
-     * @param str 要压缩的字符串
-     * @return
-     */
-    public static String compress(String str) {
-        if (str == null || str.length() == 0) {
-            return str;
-        }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        GZIPOutputStream gzip = null;
-        try {
-            gzip = new GZIPOutputStream(out);
-            gzip.write(str.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (gzip != null) {
-                try {
-                    gzip.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-       return Base64.getEncoder().encodeToString(out.toByteArray());
-    }
-
-    /**
-     * 使用gzip解压缩
-     * @param compressedStr 压缩字符串
-     * @return
-     */
-    public static String uncompress(String compressedStr) {
-        if (compressedStr == null) {
-            return null;
-        }
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayInputStream in = null;
-        GZIPInputStream ginzip = null;
-        byte[] compressed = null;
-        String decompressed = null;
-        try {
-            compressed = Base64.getDecoder().decode(compressedStr);
-            in = new ByteArrayInputStream(compressed);
-            ginzip = new GZIPInputStream(in);
-            byte[] buffer = new byte[1024];
-            int offset = -1;
-            while ((offset = ginzip.read(buffer)) != -1) {
-                out.write(buffer, 0, offset);
-            }
-            decompressed = out.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (ginzip != null) {
-                try {
-                    ginzip.close();
-                } catch (IOException e) {
-                }
-            }
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-        return decompressed;
-    }
-    /**
-     * 编码和压缩字符串
-     * @Author lrh 2020/9/25 13:50
-     */
-    public static String encodeAndCompress(byte[] src){
-        String s = Base64.getEncoder().encodeToString(src);
-        return compress(s);
-    }
-    /**
-     * 解码和解压缩字符串
-     * @Author lrh 2020/9/25 13:50
-     */
-    public static byte[] decodeUnCompress(String data){
-        String s = uncompress(data);
-        return Base64.getDecoder().decode(s);
-    }
     /**
      * 分割图片并给图片进行编号
      * @Author lrh 2020/9/28 12:15
@@ -134,7 +38,7 @@ public class Util {
     public static Map<Integer,ImageData> splitImageAndNum(int screenWidth, int screenHeight, int marginLeft, BufferedImage sourceBufferedImage){
         Map<Integer,ImageData> dataMap = new HashMap<>();
         int width_interval = 10; //宽度分成10份
-        int height_interval = 3; //高度分成2份
+        int height_interval = 4; //高度分成2份
         int width = screenWidth / width_interval;  //图片宽度
         int height = screenHeight / height_interval; //图片高度
         int x = marginLeft; //图片x坐标
@@ -348,66 +252,7 @@ public class Util {
 //            e.printStackTrace();
 //        }
         System.out.println("数据总子节数="+allBytes.length);
-
-
         return allBytes;
-    }
-    /**   
-     * 合并图片
-     * @Author lrh 2020/10/13 15:50
-     */
-    public static void mergeImage(BufferedImage globelBufferedImage,ImageData imageData){
-        Graphics g = globelBufferedImage.getGraphics(); //获取画笔
-
-        ////获取局部图片的缓冲区
-        BufferedImage subImage = null;
-        try {
-            subImage = ImageIO.read(new ByteArrayInputStream(decodeUnCompress(imageData.getData())));
-            //使用画笔将局部图片缓冲区画到全局缓冲区上，替换原来的图片
-            g.clearRect(imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight());
-            g.drawImage(subImage,imageData.getX(),imageData.getY(),imageData.getWidth(),imageData.getHeight(),null);
-            g.dispose();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    /**
-     * 待合并的两张图必须满足这样的前提，如果水平方向合并，则高度必须相等；如果是垂直方向合并，宽度必须相等。
-     * mergeImage方法不做判断，自己判断。
-     *
-     * @param img1
-     *            待合并的第一张图
-     * @param img2
-     *            带合并的第二张图
-     * @param isHorizontal
-     *            为true时表示水平方向合并，为false时表示垂直方向合并
-     * @return 返回合并后的BufferedImage对象
-     * @throws IOException
-     */
-    public static BufferedImage mergeImage(BufferedImage img1, BufferedImage img2, boolean isHorizontal,int startX, int startY)throws IOException {
-        int w1 = img1.getWidth();
-        int h1 = img1.getHeight();
-        int w2 = img2.getWidth();
-        int h2 = img2.getHeight();
-
-        // 从图片中读取RGB
-        int[] ImageArrayOne = new int[w1 * h1];
-        ImageArrayOne = img1.getRGB(0, 0, w1, h1, ImageArrayOne, 0, w1); // 逐行扫描图像中各个像素的RGB到数组中
-        int[] ImageArrayTwo = new int[w2 * h2];
-        ImageArrayTwo = img2.getRGB(0, 0, w2, h2, ImageArrayTwo, 0, w2);
-
-        // 生成新图片
-        BufferedImage DestImage = null;
-        if (isHorizontal) { // 水平方向合并
-            DestImage = new BufferedImage(w1, h1, BufferedImage.TYPE_INT_RGB);
-            DestImage.setRGB(0, 0, w1, h1, ImageArrayOne, 0, w1); // 设置上半部分或左半部分的RGB
-            DestImage.setRGB(startX,startY, w2, h2, ImageArrayTwo, 0, w2); // 设置下半部分的RGB
-        } else { // 垂直方向合并
-            DestImage = new BufferedImage(w1, h1 + h2,BufferedImage.TYPE_INT_RGB);
-            DestImage.setRGB(0, 0, w1, h1, ImageArrayOne, 0, w1); // 设置上半部分或左半部分的RGB
-            DestImage.setRGB(0, h1, w2, h2, ImageArrayTwo, 0, w2); // 设置下半部分的RGB
-        }
-        return DestImage;
     }
 
     public static void main(String[] args) throws Exception {
@@ -442,16 +287,23 @@ public class Util {
 
 
             // 字符串超过一定的长度
-       /* String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
+        String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
+                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
+                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
+                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
+                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
+                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
+                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
                 "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
                 "aLUIGOM1TCW6ZogcEZEc52DuocUEID9+LJHFdT8wN8A2IKEuZZv1vFiNgmvG5vbo4xoulzh1c5kJ\n" +
                 "ZxVOg+q5yPb6eCth6viCoeuGWp2gmktKww/zVmi1ts5EvmD5TGo3qOpmPudzFC7sR9fTZUa3HEEy\n" +
                 "bSVFoh3sWxZS+KwV";
-        System.out.println("原始字符串大小="+str.getBytes("gbk").length);
-        byte[] bytes = zipCompress(str);
-        System.out.printf("压缩后字符串大小="+bytes.length);*/
+        System.out.println("原始字符串大小="+str.length());
+//        byte[] bytes = zipCompress(str);
+//        System.out.printf("压缩后字符串大小="+bytes.length);
 
-
+//        String s = zipString(str);
+//        System.out.println(s.length());
 //        System.out.println("\n原始的字符串为------->" + str);
 //        float len0=str.length();
 //        System.out.println("原始的字符串长度为------->"+len0);
@@ -496,7 +348,70 @@ public class Util {
 //        ImageIO.write(image2, "jpg", new File(outputJpgPath));
 
     }
+    /**
+     * 压缩
+     */
+    public static String zipString(byte[] data) {
+        /**
+         *     https://www.yiibai.com/javazip/javazip_deflater.html#article-start
+         *     0 ~ 9 压缩等级 低到高
+         *     public static final int BEST_COMPRESSION = 9;            最佳压缩的压缩级别。
+         *     public static final int BEST_SPEED = 1;                  压缩级别最快的压缩。
+         *     public static final int DEFAULT_COMPRESSION = -1;        默认压缩级别。
+         *     public static final int DEFAULT_STRATEGY = 0;            默认压缩策略。
+         *     public static final int DEFLATED = 8;                    压缩算法的压缩方法(目前唯一支持的压缩方法)。
+         *     public static final int FILTERED = 1;                    压缩策略最适用于大部分数值较小且数据分布随机分布的数据。
+         *     public static final int FULL_FLUSH = 3;                  压缩刷新模式，用于清除所有待处理的输出并重置拆卸器。
+         *     public static final int HUFFMAN_ONLY = 2;                仅用于霍夫曼编码的压缩策略。
+         *     public static final int NO_COMPRESSION = 0;              不压缩的压缩级别。
+         *     public static final int NO_FLUSH = 0;                    用于实现最佳压缩结果的压缩刷新模式。
+         *     public static final int SYNC_FLUSH = 2;                  用于清除所有未决输出的压缩刷新模式; 可能会降低某些压缩算法的压缩率。
+         */
 
+        //使用指定的压缩级别创建一个新的压缩器。
+        Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
+        //设置压缩输入数据。
+        deflater.setInput(data);
+        //当被调用时，表示压缩应该以输入缓冲区的当前内容结束。
+        deflater.finish();
+        final byte[] bytes = new byte[1024];
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(1024);
+        while (!deflater.finished()) {
+            //压缩输入数据并用压缩数据填充指定的缓冲区。
+            int length = deflater.deflate(bytes);
+            outputStream.write(bytes, 0, length);
+        }
+        //关闭压缩器并丢弃任何未处理的输入。
+        deflater.end();
+        return Base64.getEncoder().encodeToString(outputStream.toByteArray());
+    }
+    /**
+     * 解压缩
+     */
+    public static byte[] unzipString(String zipString) {
+        byte[] decode = Base64.getDecoder().decode(zipString);
+        //创建一个新的解压缩器  https://www.yiibai.com/javazip/javazip_inflater.html
+        Inflater inflater = new Inflater();
+        //设置解压缩的输入数据。
+        inflater.setInput(decode);
+        final byte[] bytes = new byte[1024];
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(1024);
+        try {
+            //finished() 如果已到达压缩数据流的末尾，则返回true。
+            while (!inflater.finished()) {
+                //将字节解压缩到指定的缓冲区中。
+                int length = inflater.inflate(bytes);
+                outputStream.write(bytes, 0, length);
+            }
+        } catch (DataFormatException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            //关闭解压缩器并丢弃任何未处理的输入。
+            inflater.end();
+        }
+        return outputStream.toByteArray();
+    }
     /**
      * 将图片转换成webp格式
      * @param qualit 0-1 之间，表示图片质量，默认0.3
@@ -508,7 +423,8 @@ public class Util {
         writeParam.setCompressionMode(1);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         MemoryCacheImageOutputStream m = new MemoryCacheImageOutputStream(out);
-        writer.setOutput(m);
+//        writer.setOutput(m);
+        writer.setOutput(new FileImageOutputStream(new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\"+new Random().nextInt(Integer.MAX_VALUE)+".webp")));
         writer.write((IIOMetadata)null, new IIOImage(bufferedImage, (List)null, (IIOMetadata)null), writeParam);
         m.flush();//需要调用这个方法，将内存中的数据刷新到输出流中，否则输出流没有数据
         return out.toByteArray();
@@ -519,7 +435,7 @@ public class Util {
      * @Author lrh 2020/10/22 15:40
      */
     public static byte[] webpEncode(BufferedImage bufferedImage,float qualit){
-        WebPWriter writer = (WebPWriter)ImageIO.getImageWritersByMIMEType("image/webp").next();
+        ImageWriter writer = (ImageWriter)ImageIO.getImageWritersByMIMEType("image/webp").next();
         WebPWriteParam writeParam = new WebPWriteParam(writer.getLocale());
         writeParam.setCompressionMode(MODE_EXPLICIT); //压缩模式，不能变
         writeParam.setCompressionType("Lossy"); //Lossless 无损压缩，Lossy 有损压缩
@@ -528,7 +444,6 @@ public class Util {
         MemoryCacheImageOutputStream m = new MemoryCacheImageOutputStream(outputStream);
         writer.setOutput(m);
         try {
-//           return writer.writeToByteArray((IIOMetadata) null, new IIOImage(bufferedImage, (List) null, (IIOMetadata) null), writeParam);
            writer.write((IIOMetadata)null, new IIOImage(bufferedImage, (List)null, (IIOMetadata)null), writeParam);
            m.flush();//需要调用这个方法，将内存中的数据刷新到输出流中，否则输出流没有数据
            return outputStream.toByteArray();
@@ -542,69 +457,21 @@ public class Util {
      * @Author lrh 2020/10/27 13:51
      */
     public static BufferedImage webpDecode(byte[] bytes){
-        WebPReader reader = (WebPReader)ImageIO.getImageReadersByMIMEType("image/webp").next();
+        ImageReader reader = (ImageReader)ImageIO.getImageReadersByMIMEType("image/webp").next();
         WebPReadParam readParam = new WebPReadParam();
         readParam.setBypassFiltering(true);
         MemoryCacheImageInputStream in = new MemoryCacheImageInputStream(new ByteArrayInputStream(bytes));
         reader.setInput(in);
+        BufferedImage image = null;
         try {
-            in.flush();
-            return reader.read(0, readParam);
+            image = reader.read(0, readParam);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return image;
     }
     
     
-    /**
-     *
-     * 自己设置压缩质量来把图片压缩成byte[]
-     *
-     * @param image
-     *            压缩源图片
-     * @param quality
-     *            压缩质量，在0-1之间，
-     * @return 返回的字节数组
-     */
-    public static byte[] bufferedImageTobytes(BufferedImage image, float quality) {
-        // 如果图片空，返回空
-        /*if (image == null) {
-            return null;
-        } */
-        // 得到指定Format图片的writer
-        Iterator<ImageWriter> iter = ImageIO
-                .getImageWritersByFormatName("jpg");// 得到迭代器
-        ImageWriter writer = (ImageWriter) iter.next(); // 得到writer
-
-        // 得到指定writer的输出参数设置(ImageWriteParam )
-        ImageWriteParam iwp = writer.getDefaultWriteParam();
-        iwp.setCompressionMode(MODE_EXPLICIT); // 设置可否压缩
-        iwp.setCompressionQuality(quality); // 设置压缩质量参数
-
-        iwp.setProgressiveMode(ImageWriteParam.MODE_DISABLED);
-
-        ColorModel colorModel = image.getColorModel();
-        // 指定压缩时使用的色彩模式
-        iwp.setDestinationType(new javax.imageio.ImageTypeSpecifier(colorModel,
-                colorModel.createCompatibleSampleModel(16, 16)));
-
-        // 开始打包图片，写入byte[]
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(); // 取得内存输出流
-        IIOImage iIamge = new IIOImage(image, null, null);
-        try {
-            // 此处因为ImageWriter中用来接收write信息的output要求必须是ImageOutput
-            // 通过ImageIo中的静态方法，得到byteArrayOutputStream的ImageOutput
-            writer.setOutput(ImageIO
-                    .createImageOutputStream(byteArrayOutputStream));
-            writer.write(null, iIamge, iwp);
-
-        } catch (IOException e) {
-            System.out.println("write errro");
-            e.printStackTrace();
-        }
-        return byteArrayOutputStream.toByteArray();
-    }
 
     /** Compress a string to a list of output symbols. */
     public static List<Integer> LZWcompress(String uncompressed) {
@@ -707,94 +574,4 @@ public class Util {
         return image;
     }
 
-    /**
-     * zip压缩
-     *
-     * @param paramString
-     * @return
-     */
-    public static final byte[] zipCompress(String paramString) throws Exception {
-        if (paramString == null)
-            return null;
-        ByteArrayOutputStream byteArrayOutputStream = null;
-        ZipOutputStream zipOutputStream = null;
-        byte[] arrayOfByte;
-        try {
-            byteArrayOutputStream = new ByteArrayOutputStream();
-            zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
-            zipOutputStream.putNextEntry(new ZipEntry("0"));
-            zipOutputStream.write(paramString.getBytes("GBK"));//这里采用gbk方式压缩，如果采用编译器默认的utf-8，这里就直接getByte();
-            zipOutputStream.closeEntry();
-            arrayOfByte = byteArrayOutputStream.toByteArray();
-        } catch (IOException e) {
-            arrayOfByte = null;
-            throw new Exception("压缩字符串数据出错", e);
-        } finally {
-            if (zipOutputStream != null)
-                try {
-                    zipOutputStream.close();
-                } catch (IOException e) {
-                    System.out.println("关闭zipOutputStream出错,e="+e);
-                }
-            if (byteArrayOutputStream != null)
-                try {
-                    byteArrayOutputStream.close();
-                } catch (IOException e) {
-                    System.out.println("关闭byteArrayOutputStream出错,e="+e);
-                }
-        }
-        return arrayOfByte;
-    }
-    /**
-     * zip解压缩
-     *
-     * @param compressed
-     * @return
-     */
-    public static String zipDecompress(byte[] compressed) throws Exception {
-        if (compressed == null)
-            return null;
-        ByteArrayOutputStream out = null;
-        ByteArrayInputStream in = null;
-        ZipInputStream zin = null;
-        String decompressed;
-        try {
-            out = new ByteArrayOutputStream();
-            in = new ByteArrayInputStream(compressed);
-            zin = new ZipInputStream(in);
-            zin.getNextEntry();
-            byte[] buffer = new byte[1024];
-            int offset = -1;
-            while ((offset = zin.read(buffer)) != -1) {
-                out.write(buffer, 0, offset);
-            }
-            decompressed = out.toString("GBK");//相应的这里也要采用gbk方式解压缩，如果采用编译器默认的utf-8，这里就直接toString()就ok了
-        } catch (IOException e) {
-            decompressed = null;
-            throw new Exception("解压缩字符串数据出错", e);
-        } finally {
-            if (zin != null) {
-                try {
-                    zin.close();
-                } catch (IOException e) {
-                    System.out.println("关闭ZipInputStream出错,e="+e);
-                }
-            }
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    System.out.println("关闭byteArrayOutputStream出错,e="+e);
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    System.out.println("关闭ByteArrayOutputStream出错,e="+e);
-                }
-            }
-        }
-        return decompressed;
-    }
 }

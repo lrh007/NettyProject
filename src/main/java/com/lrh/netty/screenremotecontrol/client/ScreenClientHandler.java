@@ -121,10 +121,10 @@ public class ScreenClientHandler extends ChannelInboundHandlerAdapter {
                         System.out.println("发送数据,CONNECT_CLOSE="+Const.CONNECT_CLOSE);
                         BufferedImage screenCapture = finalRobot.createScreenCapture(rectangle);
                         //先把原图片缩小成原来的90%大小，质量为60%
-                        screenCapture = Thumbnails.of(screenCapture).scale(Const.scale).outputQuality(1f).outputFormat("jpg").asBufferedImage();
+//                        screenCapture = Thumbnails.of(screenCapture).scale(Const.scale).outputQuality(1f).outputFormat("jpg").asBufferedImage();
                         //分割图片
 //                        List<ImageData> imageDatas = Util.splitImage((int) (screenSize.width*0.9), (int) (screenSize.height *0.9),0, bufferedImage);
-                        Map<Integer, ImageData> imageDatas = Util.splitImageAndNum((int)(screenSize.width*Const.scale), (int)(screenSize.height*Const.scale), 0, screenCapture);
+                        Map<Integer, ImageData> imageDatas = Util.splitImageAndNum(screenSize.width, screenSize.height, 0, screenCapture);
                         //如果是第一次，就将当前的数据保存
                         if(beforeImageData.size() == 0){
                             beforeImageData.putAll(imageDatas);
@@ -132,36 +132,7 @@ public class ScreenClientHandler extends ChannelInboundHandlerAdapter {
                             for (int i=0;i<imageDatas.size();i++){
                                 ImageData data = imageDatas.get(i);
                                 byte[] bytes = Util.encodeImage(data.getBufferedImage());
-                                String imageData = Util.encodeAndCompress(bytes); ////对图片进行编码
-                                System.out.println("发送之前图片大小="+bytes.length/1024);
-                                //发送数据的时候使用protobuf序列化
-                                ProtoMsg.Image dataImage = ProtoMsg.Image.newBuilder()
-                                        .setData(imageData)
-                                        .setX(data.getX())
-                                        .setY(data.getY())
-                                        .setHeight(data.getHeight())
-                                        .setWidth(data.getWidth())
-                                        .setNumber(data.getNumber())
-                                        .setScreenWidth(screenSize.width)
-                                        .setScreenHeight(screenSize.height).build();
-                                ProtoMsg.Screen screen = ProtoMsg.Screen.newBuilder()
-                                        .setSendName(screenData.getReceiveName())
-                                        .setReceiveName(screenData.getSendName())
-                                        .setStatus(Const.STATUS_AGREE)
-                                        .setImage(dataImage).build();
-                                ctx.writeAndFlush(screen);
-                            }
-                        }
-                        for (int i=0;i<imageDatas.size();i++){
-                            ImageData data = imageDatas.get(i);
-                            //用来保存之前的数据进行异或操作
-                            BufferedImage beforeBufferedImage = beforeImageData.get(data.getNumber()).getBufferedImage();
-                            boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
-                            if(!b){
-                                //将原来的图片替换保存
-                                beforeImageData.get(data.getNumber()).setBufferedImage(data.getBufferedImage());
-                                byte[] bytes = Util.encodeImage(data.getBufferedImage());
-                                String imageData = Util.encodeAndCompress(bytes); ////对图片进行编码
+                                String imageData = Util.zipString(bytes); ////对图片进行编码
                                 System.out.println("发送之前图片大小="+bytes.length/1024);
                                 //发送数据的时候使用protobuf序列化
                                 ProtoMsg.Image dataImage = ProtoMsg.Image.newBuilder()
@@ -180,6 +151,37 @@ public class ScreenClientHandler extends ChannelInboundHandlerAdapter {
                                         .setImage(dataImage).build();
                                 ctx.writeAndFlush(screen);
                                 data = null;
+                            }
+                        }
+                        for (int i=0;i<imageDatas.size();i++){
+                            ImageData data = imageDatas.get(i);
+                            //用来保存之前的数据进行异或操作
+                            BufferedImage beforeBufferedImage = beforeImageData.get(data.getNumber()).getBufferedImage();
+                            boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
+                            if(!b){
+                                //将原来的图片替换保存
+                                beforeImageData.get(data.getNumber()).setBufferedImage(data.getBufferedImage());
+                                byte[] bytes = Util.encodeImage(data.getBufferedImage());
+                                String imageData = Util.zipString(bytes); ////对图片进行编码
+                                System.out.println("发送之前图片大小="+bytes.length/1024);
+                                //发送数据的时候使用protobuf序列化
+                                ProtoMsg.Image dataImage = ProtoMsg.Image.newBuilder()
+                                        .setData(imageData)
+                                        .setX(data.getX())
+                                        .setY(data.getY())
+                                        .setHeight(data.getHeight())
+                                        .setWidth(data.getWidth())
+                                        .setNumber(data.getNumber())
+                                        .setScreenWidth(screenSize.width)
+                                        .setScreenHeight(screenSize.height).build();
+                                ProtoMsg.Screen screen = ProtoMsg.Screen.newBuilder()
+                                        .setSendName(screenData.getReceiveName())
+                                        .setReceiveName(screenData.getSendName())
+                                        .setStatus(Const.STATUS_AGREE)
+                                        .setImage(dataImage).build();
+                                ctx.writeAndFlush(screen);
+                                data = null;
+
                             }
                         }
                         Thread.sleep(Const.SEND_DATA_INTERVAL);
