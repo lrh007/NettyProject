@@ -33,7 +33,7 @@ public class ViewFrame {
     private JFrame jFrame = new JFrame("view");
     private JPanel jPanel = new JPanel();
     // 创建滚动面板, 指定滚动显示的视图组件(textArea), 垂直滚动条一直显示, 水平滚动条从不显示
-    private JScrollPane jScrollPane = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+    private JScrollPane jScrollPane = new JScrollPane();
     /**
      * 保存所有的JLabel组件
      * @Author lrh 2020/10/13 16:44
