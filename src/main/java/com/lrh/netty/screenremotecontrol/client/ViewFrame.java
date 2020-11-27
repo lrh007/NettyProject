@@ -214,12 +214,12 @@ public class ViewFrame {
                             //将图片进行还原操作
 //                            BufferedImage bufferedImage = Util.restoreXorImageData(beforeBufferedImage, xorImageData);
                             byte[] bytes = Util.encodeImage(data.getBufferedImage());
+//                            byte[] bytes = Util.encodeImage(xorImageData);
 //                            byte[] bytes = Util.webpEncode2(data.getBufferedImage(), 0.7f);
                             String imageData = Util.zipString(bytes);
                             System.out.println("发送之前图片大小="+bytes.length/1024);
                             ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
                             instance.showView2(dataImage);
-
 //                            byte[] bytes2 = Util.decodeUnCompress(imageData);
 //                            BufferedImage image = Util.webpDecode(bytes);
 //                            ImageIO.write(image,"webp",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\"+new Random().nextInt(Integer.MAX_VALUE)+".jpg"));

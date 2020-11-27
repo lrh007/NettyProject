@@ -18,6 +18,9 @@ import java.awt.image.RenderedImage;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.zip.*;
@@ -99,8 +102,9 @@ public class Util {
         int width = newImageData.getWidth();
 //        ImageData imageData = beforeData.get(imageNumber);
 //        BufferedImage beforeBufferedImage = imageData.getBufferedImage();
-        int intervalX = 20; //隔行扫描
-        int intervalY = 20;
+        int interval = new Random().nextInt(10); //保证每次扫描的行数不一样
+        int intervalX = 40 + interval; //隔行扫描
+        int intervalY = 40 + interval;
         for (int x=0;x<width;x += intervalX){
             for (int y = 0;y<height;y += intervalY){
                 int newRGB = newImageData.getRGB(x, y);
@@ -286,46 +290,19 @@ public class Util {
 //        ImageIO.write(image,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\2.jpg"));
 
 
-            // 字符串超过一定的长度
-        String str = "OimKBp+DNM9N9Ce1A6yFM2VcySnScSBlCWy0FwXapH3jmL2FpjzXYvuFIvJOsdjKW/9RSAeP/q5u\n" +
-                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
-                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
-                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
-                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
-                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
-                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
-                "6qyArAfXbnccj+cvYL8vMW8FqFZIMwRpVht3hmJuMdDjNubFhL9VBfapTpkIGpTbiXDvNQ2MBjPI\n" +
-                "aLUIGOM1TCW6ZogcEZEc52DuocUEID9+LJHFdT8wN8A2IKEuZZv1vFiNgmvG5vbo4xoulzh1c5kJ\n" +
-                "ZxVOg+q5yPb6eCth6viCoeuGWp2gmktKww/zVmi1ts5EvmD5TGo3qOpmPudzFC7sR9fTZUa3HEEy\n" +
-                "bSVFoh3sWxZS+KwV";
+        // 字符串超过一定的长度
+        String str = "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";
         System.out.println("原始字符串大小="+str.length());
-//        byte[] bytes = zipCompress(str);
-//        System.out.printf("压缩后字符串大小="+bytes.length);
-
-//        String s = zipString(str);
-//        System.out.println(s.length());
-//        System.out.println("\n原始的字符串为------->" + str);
-//        float len0=str.length();
-//        System.out.println("原始的字符串长度为------->"+len0);
-//        List<Integer> list = LZWcompress(str);
-//        float len1=list.size();
-//        System.out.println("压缩后的字符串长度为----->" + len1);
-//        String jy = LZWdecompress(list);
-//        System.out.println("\n解压缩后的字符串为--->" + jy);
-//        System.out.println("解压缩后的字符串长度为--->"+jy.length());
-//        //判断
-//        if(str.equals(jy)){
-//            System.out.println("先压缩再解压以后字符串和原来的是一模一样的");
-//        }
-//        String s = Arrays.asList(list).toString();
-//        System.out.println(s.replaceAll("\\[\\[|\\]\\]",""));
-
-//        System.load("C:\\Users\\MACHENIKE\\AppData\\Local\\Temp\\libwebp-imageio.so");
-//        System.out.println(System.getProperty("user.dir"));
-//        File outfile = File.createTempFile("imageio", ".dll",new File(System.getProperty("user.dir")));
-//        System.out.println(outfile.getAbsolutePath());
-
-//        this.getClass().getClassLoader().getResource("META-INF/lib/windows_64/" + "webp-imageio.dll");
+//        List<Integer> integers = LZWcompress(str);
+        String s1 = LZWcompress2(str);
+        System.out.println(s1);
+        String s = zipString(str.getBytes());
+        System.out.println(s.length());
+//        System.out.println("list="+integers.size());
+//        String s = LZWdecompress(integers);
+//        System.out.println("还原后的字符串： "+s);
+//        BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(s.getBytes()));
+//        ImageIO.write(bufferedImage,"jpg",new File("C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\test.jpg"));
 
         //编码
 //        String inputJpgPath = "C:\\Users\\MACHENIKE\\Desktop\\新建文件夹\\1.jpg";
@@ -348,6 +325,7 @@ public class Util {
 //        ImageIO.write(image2, "jpg", new File(outputJpgPath));
 
     }
+
     /**
      * 压缩
      */
@@ -501,6 +479,32 @@ public class Util {
         return result;
     }
 
+    public static String LZWcompress2(String uncompressed) {
+        // Build the dictionary.
+        int dictSize = 256;
+        Map<String,Integer> dictionary = new HashMap<String,Integer>();
+        for (int i = 0; i < 256; i++)
+            dictionary.put("" + (char)i, i);
+
+        String w = "";
+        StringBuilder builder = new StringBuilder();
+        for (char c : uncompressed.toCharArray()) {
+            String wc = w + c;
+            if (dictionary.containsKey(wc))
+                w = wc;
+            else {
+                builder.append(dictionary.get(w)).append(",");
+                // Add wc to the dictionary.
+                dictionary.put(wc, dictSize++);
+                w = "" + c;
+            }
+        }
+
+        // Output the code for w.
+        if (!w.equals(""))
+            builder.append(dictionary.get(w)).append(",");
+        return builder.toString();
+    }
     /** Decompress a list of output ks to a string. */
     public static String LZWdecompress(List<Integer> compressed) {
         // Build the dictionary.
@@ -543,7 +547,7 @@ public class Util {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
         JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(image);
-        param.setQuality(0.75f, false);
+        param.setQuality(0.5f, false);
         encoder.setJPEGEncodeParam(param);
         try {
             encoder.encode(image);
@@ -552,6 +556,19 @@ public class Util {
         }
         return out.toByteArray();
 
+    }
+
+    /**
+     * byte[] 数组转换成 char[] 数组
+     * @Author lrh 2020/11/10 10:49
+     */
+    public static char[] getChars(byte[] bytes) {
+        Charset cs = Charset.forName("UTF-8");
+        ByteBuffer bb = ByteBuffer.allocate(bytes.length);
+        bb.put(bytes);
+        bb.flip();
+        CharBuffer cb = cs.decode(bb);
+        return cb.array();
     }
 
     /**对图像进行解压缩

@@ -24,7 +24,7 @@ public class Const {
      * 服务器ip
      * @Author lrh 2020/9/22 17:30
      */
-    public static final String SERVER_HOST = "10.238.112.216";
+    public static final String SERVER_HOST = "127.0.0.1";
     /**
      * 服务器端口号
      * @Author lrh 2020/9/22 17:31
