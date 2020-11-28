@@ -1,5 +1,6 @@
 package com.lrh.netty.screenremotecontrol.client;
 
+import com.google.protobuf.ByteString;
 import com.lrh.netty.screenremotecontrol.ProtoMsg;
 import com.lrh.netty.screenremotecontrol.client.bean.Const;
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
@@ -106,7 +107,7 @@ public class ViewFrame {
         //第四种方式，分块传输，动态创建JLabel，优点：是不用合并图片，缺点：需要创建多个JLabel
         if(allJLables.get(imageData.getNumber()) != null){
             JLabel jLabel = allJLables.get(imageData.getNumber());
-            byte[] bytes = Util.unzipString(imageData.getData());
+            byte[] bytes = Util.unzipString2(imageData.getData().toByteArray());
             ImageIcon imageIcon = new ImageIcon(bytes);
             jLabel.setIcon(imageIcon);
         }else{
@@ -118,7 +119,7 @@ public class ViewFrame {
             allJLables.put(imageData.getNumber(),jLabel);
             System.out.println("allJLables="+allJLables.size());
             //第一次直接将图片显示出来
-            byte[] bytes = Util.unzipString(imageData.getData());
+            byte[] bytes = Util.unzipString2(imageData.getData().toByteArray());
             ImageIcon imageIcon = new ImageIcon(bytes);
             jLabel.setIcon(imageIcon);
             ComponentListener.updateUI(jPanel);
@@ -209,15 +210,17 @@ public class ViewFrame {
                             //将原来的图片替换
                             beforeImageData.get(j).setBufferedImage(data.getBufferedImage());
                             //将图片进行异或操作
-//                            BufferedImage xorImageData = Util.getXorImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
+                            BufferedImage xorImageData = Util.getXorImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
 
                             //将图片进行还原操作
 //                            BufferedImage bufferedImage = Util.restoreXorImageData(beforeBufferedImage, xorImageData);
                             byte[] bytes = Util.encodeImage(data.getBufferedImage());
-//                            byte[] bytes = Util.encodeImage(xorImageData);
+                            byte[] bytes2 = Util.encodeImage(xorImageData);
 //                            byte[] bytes = Util.webpEncode2(data.getBufferedImage(), 0.7f);
+                            byte[] bs = Util.zipString2(bytes2);
+                            System.out.println("bs压缩后图片大小："+bs.length/1024+"，之前大小="+bytes.length/1024);
                             String imageData = Util.zipString(bytes);
-                            System.out.println("发送之前图片大小="+bytes.length/1024);
+                            System.out.println("压缩之后图片大小="+imageData.getBytes().length/1024);
                             ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
                             instance.showView2(dataImage);
 //                            byte[] bytes2 = Util.decodeUnCompress(imageData);

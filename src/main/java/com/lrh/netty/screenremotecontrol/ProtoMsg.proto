@@ -21,7 +21,7 @@ message Screen{
 //图片消息
 message Image{
   //图片数据
-  string data = 1;
+  bytes data = 1;
   //图片X坐标
   int32 x = 2;
   //图片y坐标

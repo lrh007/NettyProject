@@ -1,5 +1,6 @@
 package com.lrh.netty.screenremotecontrol.client;
 
+import com.google.protobuf.ByteString;
 import com.lrh.netty.screenremotecontrol.ProtoMsg;
 import com.lrh.netty.screenremotecontrol.client.bean.Const;
 import com.lrh.netty.screenremotecontrol.client.bean.ImageData;
@@ -90,7 +91,7 @@ public class ScreenClientHandler extends ChannelInboundHandlerAdapter {
             //展示图像
             //因为鼠标事件也需要发送消息，所以这里要判断一下
             if(screenData.getImage() != null){
-                System.out.println("图片大小= "+screenData.getImage().getData().length()+",大小="+screenData.getImage().getData().getBytes().length/1024);
+                System.out.println("图片大小="+screenData.getImage().getData().toByteArray().length/1024);
                 ViewFrame.INSTANCE().showView(screenData.getImage());
             }
 //            handlerMouseEvent(screenData.getMouse());
@@ -132,11 +133,11 @@ public class ScreenClientHandler extends ChannelInboundHandlerAdapter {
                             for (int i=0;i<imageDatas.size();i++){
                                 ImageData data = imageDatas.get(i);
                                 byte[] bytes = Util.encodeImage(data.getBufferedImage());
-                                String imageData = Util.zipString(bytes); ////对图片进行编码
-                                System.out.println("发送之前图片大小="+bytes.length/1024);
+                                byte[] imageData = Util.zipString2(bytes); //对图片进行压缩
+                                System.out.println("发送之前图片大小="+imageData.length/1024);
                                 //发送数据的时候使用protobuf序列化
                                 ProtoMsg.Image dataImage = ProtoMsg.Image.newBuilder()
-                                        .setData(imageData)
+                                        .setData(ByteString.copyFrom(imageData))
                                         .setX(data.getX())
                                         .setY(data.getY())
                                         .setHeight(data.getHeight())
@@ -160,13 +161,15 @@ public class ScreenClientHandler extends ChannelInboundHandlerAdapter {
                             boolean b = Util.compareImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
                             if(!b){
                                 //将原来的图片替换保存
-                                beforeImageData.get(data.getNumber()).setBufferedImage(data.getBufferedImage());
+                                ImageData tempImageData = beforeImageData.get(data.getNumber());
+                                tempImageData.setBufferedImage(data.getBufferedImage());
+                                beforeImageData.put(data.getNumber(),tempImageData);
                                 byte[] bytes = Util.encodeImage(data.getBufferedImage());
-                                String imageData = Util.zipString(bytes); ////对图片进行编码
-                                System.out.println("发送之前图片大小="+bytes.length/1024);
+                                byte[] imageData = Util.zipString2(bytes); //对图片进行压缩
+                                System.out.println("发送之前图片大小="+imageData.length/1024);
                                 //发送数据的时候使用protobuf序列化
                                 ProtoMsg.Image dataImage = ProtoMsg.Image.newBuilder()
-                                        .setData(imageData)
+                                        .setData(ByteString.copyFrom(imageData))
                                         .setX(data.getX())
                                         .setY(data.getY())
                                         .setHeight(data.getHeight())

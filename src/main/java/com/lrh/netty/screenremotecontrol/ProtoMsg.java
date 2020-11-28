@@ -1878,20 +1878,10 @@ public final class ProtoMsg {
      *图片数据
      * </pre>
      *
-     * <code>string data = 1;</code>
+     * <code>bytes data = 1;</code>
      * @return The data.
      */
-    String getData();
-    /**
-     * <pre>
-     *图片数据
-     * </pre>
-     *
-     * <code>string data = 1;</code>
-     * @return The bytes for data.
-     */
-    com.google.protobuf.ByteString
-        getDataBytes();
+    com.google.protobuf.ByteString getData();
 
     /**
      * <pre>
@@ -2020,7 +2010,7 @@ public final class ProtoMsg {
       super(builder);
     }
     private Image() {
-      data_ = "";
+      data_ = com.google.protobuf.ByteString.EMPTY;
     }
 
     @Override
@@ -2054,9 +2044,8 @@ public final class ProtoMsg {
               done = true;
               break;
             case 10: {
-              String s = input.readStringRequireUtf8();
 
-              data_ = s;
+              data_ = input.readBytes();
               break;
             }
             case 16: {
@@ -2147,49 +2136,18 @@ public final class ProtoMsg {
     }
 
     public static final int DATA_FIELD_NUMBER = 1;
-    private volatile Object data_;
+    private com.google.protobuf.ByteString data_;
     /**
      * <pre>
      *图片数据
      * </pre>
      *
-     * <code>string data = 1;</code>
+     * <code>bytes data = 1;</code>
      * @return The data.
      */
     @Override
-    public String getData() {
-      Object ref = data_;
-      if (ref instanceof String) {
-        return (String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        String s = bs.toStringUtf8();
-        data_ = s;
-        return s;
-      }
-    }
-    /**
-     * <pre>
-     *图片数据
-     * </pre>
-     *
-     * <code>string data = 1;</code>
-     * @return The bytes for data.
-     */
-    @Override
-    public com.google.protobuf.ByteString
-        getDataBytes() {
-      Object ref = data_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (String) ref);
-        data_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public com.google.protobuf.ByteString getData() {
+      return data_;
     }
 
     public static final int X_FIELD_NUMBER = 2;
@@ -2371,8 +2329,8 @@ public final class ProtoMsg {
     @Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getDataBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, data_);
+      if (!data_.isEmpty()) {
+        output.writeBytes(1, data_);
       }
       if (x_ != 0) {
         output.writeInt32(2, x_);
@@ -2416,8 +2374,9 @@ public final class ProtoMsg {
       if (size != -1) return size;
 
       size = 0;
-      if (!getDataBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, data_);
+      if (!data_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, data_);
       }
       if (x_ != 0) {
         size += com.google.protobuf.CodedOutputStream
@@ -2674,7 +2633,7 @@ public final class ProtoMsg {
       @Override
       public Builder clear() {
         super.clear();
-        data_ = "";
+        data_ = com.google.protobuf.ByteString.EMPTY;
 
         x_ = 0;
 
@@ -2784,9 +2743,8 @@ public final class ProtoMsg {
 
       public Builder mergeFrom(Image other) {
         if (other == Image.getDefaultInstance()) return this;
-        if (!other.getData().isEmpty()) {
-          data_ = other.data_;
-          onChanged();
+        if (other.getData() != com.google.protobuf.ByteString.EMPTY) {
+          setData(other.getData());
         }
         if (other.getX() != 0) {
           setX(other.getX());
@@ -2850,59 +2808,29 @@ public final class ProtoMsg {
         return this;
       }
 
-      private Object data_ = "";
+      private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <pre>
        *图片数据
        * </pre>
        *
-       * <code>string data = 1;</code>
+       * <code>bytes data = 1;</code>
        * @return The data.
        */
-      public String getData() {
-        Object ref = data_;
-        if (!(ref instanceof String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          String s = bs.toStringUtf8();
-          data_ = s;
-          return s;
-        } else {
-          return (String) ref;
-        }
+      @Override
+      public com.google.protobuf.ByteString getData() {
+        return data_;
       }
       /**
        * <pre>
        *图片数据
        * </pre>
        *
-       * <code>string data = 1;</code>
-       * @return The bytes for data.
-       */
-      public com.google.protobuf.ByteString
-          getDataBytes() {
-        Object ref = data_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (String) ref);
-          data_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <pre>
-       *图片数据
-       * </pre>
-       *
-       * <code>string data = 1;</code>
+       * <code>bytes data = 1;</code>
        * @param value The data to set.
        * @return This builder for chaining.
        */
-      public Builder setData(
-          String value) {
+      public Builder setData(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -2916,32 +2844,12 @@ public final class ProtoMsg {
        *图片数据
        * </pre>
        *
-       * <code>string data = 1;</code>
+       * <code>bytes data = 1;</code>
        * @return This builder for chaining.
        */
       public Builder clearData() {
         
         data_ = getDefaultInstance().getData();
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       *图片数据
-       * </pre>
-       *
-       * <code>string data = 1;</code>
-       * @param value The bytes for data to set.
-       * @return This builder for chaining.
-       */
-      public Builder setDataBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-        
-        data_ = value;
         onChanged();
         return this;
       }
@@ -5082,7 +4990,7 @@ public final class ProtoMsg {
       "\001 \001(\t\022\023\n\013receiveName\030\002 \001(\t\022\017\n\007content\030\003 " +
       "\001(\t\022\016\n\006status\030\004 \001(\005\022\025\n\005image\030\005 \001(\0132\006.Ima" +
       "ge\022\025\n\005mouse\030\006 \001(\0132\006.Mouse\022\033\n\010keyBoard\030\007 " +
-      "\001(\0132\t.KeyBoard\"\312\001\n\005Image\022\014\n\004data\030\001 \001(\t\022\t" +
+      "\001(\0132\t.KeyBoard\"\312\001\n\005Image\022\014\n\004data\030\001 \001(\014\022\t" +
       "\n\001x\030\002 \001(\005\022\t\n\001y\030\003 \001(\005\022\016\n\006height\030\004 \001(\005\022\r\n\005" +
       "width\030\005 \001(\005\022\016\n\006number\030\006 \001(\005\022\023\n\013screenWid" +
       "th\030\007 \001(\005\022\024\n\014screenHeight\030\010 \001(\005\022\r\n\005miniX\030" +
