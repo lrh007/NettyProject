@@ -198,7 +198,7 @@ public class ViewFrame {
                 threadPool.execute(new Runnable() {
                     @Override
                     public void run() {
-                        Rectangle rectangle = new Rectangle(data.getX(),data.getY(),data.getWidth(),data.getHeight());
+//                        Rectangle rectangle = new Rectangle(data.getX(),data.getY(),data.getWidth(),data.getHeight());
                         ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
 
                         long s1 = System.currentTimeMillis();
@@ -210,15 +210,15 @@ public class ViewFrame {
                             //将原来的图片替换
                             beforeImageData.get(j).setBufferedImage(data.getBufferedImage());
                             //将图片进行异或操作
-                            BufferedImage xorImageData = Util.getXorImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
+//                            BufferedImage xorImageData = Util.getXorImageData(data.getNumber(), data.getBufferedImage(), beforeBufferedImage);
 
                             //将图片进行还原操作
 //                            BufferedImage bufferedImage = Util.restoreXorImageData(beforeBufferedImage, xorImageData);
                             byte[] bytes = Util.encodeImage(data.getBufferedImage());
-                            byte[] bytes2 = Util.encodeImage(xorImageData);
+//                            byte[] bytes2 = Util.encodeImage(xorImageData);
 //                            byte[] bytes = Util.webpEncode2(data.getBufferedImage(), 0.7f);
-                            byte[] bs = Util.zipString2(bytes2);
-                            System.out.println("bs压缩后图片大小："+bs.length/1024+"，之前大小="+bytes.length/1024);
+//                            byte[] bs = Util.zipString2(bytes);
+//                            System.out.println("bs压缩后图片大小："+bs.length/1024+"，之前大小="+bytes.length/1024);
                             String imageData = Util.zipString(bytes);
                             System.out.println("压缩之后图片大小="+imageData.getBytes().length/1024);
                             ImageData dataImage = new ImageData(imageData,data.getX(),data.getY(),data.getHeight(),data.getWidth(),null,j,screenSize.width,screenSize.height);
