@@ -39,8 +39,8 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
     private FullHttpRequest fullHttpRequest;
     //默认根目录文件夹
-    private static final String DEFAULT_ROOT_PATH = System.getProperty("user.dir");
-//    private static final String DEFAULT_ROOT_PATH = "E:\\JavaProject";
+//    private static final String DEFAULT_ROOT_PATH = System.getProperty("user.dir");
+    private static final String DEFAULT_ROOT_PATH = "E:\\JavaProject";
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
